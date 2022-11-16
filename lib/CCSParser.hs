@@ -52,8 +52,7 @@ symbol sym = lexeme $ do
 ------------------------------------------------------------------------------}
 
 parseCCS :: Parser CCS
-parseCCS =
-    lexeme $ do
+parseCCS = lexeme $ do
     var <- parseVar
     sig <- parseSig
     sort <- parseSort
@@ -63,50 +62,38 @@ parseCCS =
 -- Parse the VAR section of the program
 parseVar :: Parser VAR
 parseVar = lexeme $ do
-    char '('
-    whitespace
-    string "VAR"
-    whitespace
+    symbol "("
+    symbol  "VAR"
     ids <- parseIdList
-    whitespace
-    char ')'
+    symbol ")"
     return $ Var ids
 
 
 -- Parse the SIG section of the program
 parseSig :: Parser SIG
 parseSig = lexeme $ do
-    char '('
-    whitespace
-    string "SIG"
-    whitespace
+    symbol "("
+    symbol "SIG"
     funs <- parseFunList
-    whitespace
-    char ')'
+    symbol ")"
     return $ Sig funs
 
 -- Parse the SORT section of the program
 parseSort :: Parser SORT
 parseSort = lexeme $ do
-    char '('
-    whitespace
-    string "SORT"
-    whitespace
+    symbol "("
+    symbol "SORT"
     sorts <- parseSortList
-    whitespace
-    char ')'
+    symbol ")"
     return $ Sort sorts
 
 -- Parse the RULES section of the program
 parseRules :: Parser RULES
 parseRules = lexeme $ do
-    char '('
-    whitespace
-    string "RULES"
-    whitespace
+    symbol "("
+    symbol "RULES"
     rules <- parseRuleList
-    whitespace
-    char ')'
+    symbol ")"
     return $ Rules rules
 
 
