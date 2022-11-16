@@ -1,0 +1,23 @@
+(VAR x y z)
+(SIG (add 2 1))
+(SORT
+    (zero   -> Nat)
+    (succ   Nat -> Nat)
+    (add    Nat -> Nat Nat)
+)
+(RULES
+    add(zero, y) -> <y>
+    add(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>
+)
+(COMMENT
+    author:      [1]
+    
+    description: addition
+    
+    properties of the system:
+        functional, non-reversible
+
+    [1] M. H. Kirkeby and R. Gl ̈uck, “Inversion framework:  Reasoning 
+        about inversion  by  conditional  term  rewriting  systems".
+        PPDP  
+)
