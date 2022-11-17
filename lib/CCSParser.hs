@@ -111,7 +111,10 @@ parseIdList = lexeme $ do many parseId
 -- english alphabet
 parseId :: Parser Id
 parseId = lexeme $ do
-    many1 $ oneOf $ ['a'..'z'] ++ ['A'..'Z']
+    let chars = ['a'..'z'] ++ ['A'..'Z']
+    c <- oneOf chars
+    cs <- many $ oneOf (chars ++ ['0'..'9'])
+    return (c:cs)
 
 -- funlist  ::= ε | fun funlist
 parseSigList :: Parser [Sig]
