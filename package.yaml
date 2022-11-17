@@ -12,6 +12,7 @@ library:
   exposed-modules:
     - CCSAst
     - CCSParser
+    - CCSValidate
 
 executable:
     main:                Main.hs

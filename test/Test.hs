@@ -14,163 +14,162 @@ parserTest = testGroup "Parser tests"
         testGroup "VAR"
         [
             testCase "empty 1" $
-                runParser parseVar () "" "(VAR)" 
-                @?= Right (Var []),
+                runParser parseVAR () "" "(VAR)" 
+                @?= Right [],
             testCase "empty 2" $
-                runParser parseVar () "" "(VAR )" 
-                @?= Right (Var []),
+                runParser parseVAR () "" "(VAR )" 
+                @?= Right [],
             testCase "var 1" $
-                runParser parseVar () "" "(VAR a )" 
-                @?= Right (Var ["a"]),
+                runParser parseVAR () "" "(VAR a )" 
+                @?= Right [Var "a"],
             testCase "var 2" $
-                runParser parseVar () "" "(VAR a b)" 
-                @?= Right (Var ["a", "b"]),
-            testCase "fail 1" $
-                case runParser parseVar () "" "(VAR a" of
-                    Right (Var _) -> assertFailure "fail"
-                    _ -> return ()   
+                runParser parseVAR () "" "(VAR a b)" 
+                @?= Right [Var "a", Var "b"]
         ],
         testGroup "SIG" 
         [
             testCase "single fun" $
-                runParser parseFun () "" "(add 2 1)"
-                @?= Right ("add", 2, 1),
+                runParser parseSig () "" "(add 2 1)"
+                @?= Right (Sig "add" 2 1),
             testCase "multiple fun" $
-                runParser parseSig () "" "(SIG (add 2 1)\n(sub 42 90) )"
-                @?= Right (Sig [("add", 2, 1), ("sub", 42, 90)])
+                runParser parseSIG () "" "(SIG (add 2 1)\n(sub 42 90) )"
+                @?= Right [Sig "add" 2 1, Sig "sub" 42 90]
         ],
         testGroup "SORT" 
         [
             testCase "single sort" $
-                runParser parseSort () "" "(SORT (succ Nat -> Nat))"
-                @?= Right (Sort [("succ", ["Nat"], ["Nat"])]),
+                runParser parseSORT () "" "(SORT (succ Nat -> Nat))"
+                @?= Right [Sort "succ" (Just ["Nat"]) ["Nat"]],
             testCase "base case sort" $
-                runParser parseSort () "" "(SORT (nil -> List))"
-                @?= Right (Sort [("nil", [], ["List"])]),
+                runParser parseSORT () "" "(SORT (nil -> List))"
+                @?= Right [Sort "nil" Nothing ["List"]],
             testCase "unary" $
-                runParser parseSort () "" "(SORT (z -> Nat)\n(succ Nat -> Nat))"
-                @?= Right (Sort [("z", [], ["Nat"]), ("succ", ["Nat"], ["Nat"])])
+                runParser parseSORT () "" "(SORT (z -> Nat)\n(succ Nat -> Nat))"
+                @?= Right [Sort "z" Nothing ["Nat"], Sort "succ" (Just ["Nat"]) ["Nat"]]
         ],
         testGroup "RULE" 
         [
             testCase "term 1" $
                 runParser parseTerm () "" "ident"
-                @?= Right (Term "ident" []),
+                @?= Right (Term "ident" Nothing),
             testCase "term 2" $
                 runParser parseTerm () "" "ident(a, b)"
-                @?= Right (Term "ident" [Term "a" [], Term "b" []]),
+                @?= Right (Term "ident" (Just [Term "a" Nothing, Term "b" Nothing])),
             testCase "termlist 1" $
                 runParser parseTermList () "" "a"
-                @?= Right ([Term "a" []]),
+                @?= Right [Term "a" Nothing],
             testCase "termlist 2" $
                 runParser parseTermList () "" "a, b, c"
-                @?= Right ([Term "a" [], Term "b" [], Term "c" []]),
+                @?= Right [Term "a" Nothing, Term "b" Nothing, Term "c" Nothing],
             testCase "single cond" $
                 runParser parseCond () "" "add(a, b) -> <c>"
                 @?= Right (Cond 
-                    (Term "add" [Term "a" [], Term "b" []]) 
-                    [Term "c" []]),
+                    (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) 
+                    [Term "c" Nothing]),
             testCase "single cond more output" $
                 runParser parseCond () "" "add(a, b) -> <x, s(y)>"
                 @?= Right (Cond 
-                    (Term "add" [Term "a" [], Term "b" []]) 
-                    [Term "x" [], Term "s" [Term "y" []]]),
+                    (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) 
+                    [Term "x" Nothing, Term "s" (Just [Term "y" Nothing])]),
             testCase "cond conjunction" $
                 runParser parseCondList () "" "add(a,b) -> <c> ^ sub(x, y) -> <z>"
                 @?= Right ([
-                    Cond (Term "add" [Term "a" [], Term "b" []]) [Term "c" []],
-                    Cond (Term "sub" [Term "x" [], Term "y" []]) [Term "z" []]
+                    Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "c" Nothing],
+                    Cond (Term "sub" (Just [Term "x" Nothing, Term "y" Nothing])) [Term "z" Nothing]
                     ]),
             testCase "conds non empty" $
                 runParser parseConds () "" "<= add(a, b) -> <c>"
-                @?= Right [
-                    Cond (Term "add" [Term "a" [], Term "b" []]) [Term "c" []]
-                    ],
+                @?= Right ( Just 
+                    [Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "c" Nothing]]
+                    ),
             testCase "conds empty" $
                 runParser parseConds () "" "empty"
-                @?= Right [],
+                @?= Right Nothing,
             testCase "single rule" $
                 runParser parseRuleDef () "" "l -> <r>"
-                @?= Right (Rule (Term "l" []) [Term "r" []] []),
+                @?= Right (Rule (Term "l" Nothing) [Term "r" Nothing] Nothing),
             testCase "single rule with cond" $
                 runParser parseRuleDef () "" "l -> <r> <= a -> <b>"
-                @?= Right (Rule (Term "l" []) [Term "r" []] [Cond (Term "a" []) [Term "b" []]]),
+                @?= Right (Rule (Term "l" Nothing) [Term "r" Nothing] (
+                        Just [Cond (Term "a" Nothing) [Term "b" Nothing]])
+                    ),
             testCase "two rules" $
                 runParser parseRuleList () "" "a -> <b>\n x -> <y>"
                 @?= Right ([
-                    Rule (Term "a" []) [Term "b" []] [],
-                    Rule (Term "x" []) [Term "y" []] []
+                    Rule (Term "a" Nothing) [Term "b" Nothing] Nothing,
+                    Rule (Term "x" Nothing) [Term "y" Nothing] Nothing
                     ]),
             testCase "two rules whith RULES" $
-                runParser parseRules () "" "(RULES a -> <b>\n x -> <y>)"
-                @?= Right (Rules [
-                    Rule (Term "a" []) [Term "b" []] [],
-                    Rule (Term "x" []) [Term "y" []] []
-                    ]),
-            testCase "add example rule" $
-                runParser parseRuleDef () "" "add(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>"
-                @?= Right (Rule 
-                    (Term "add" [Term "succ" [Term "x" []], Term "y" []])
-                    [Term "succ" [Term "z" []]]
-                    [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
-                    ),
-            testCase "add example rule 2" $
-                runParser parseRuleList () "" "add(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>\n"
+                runParser parseRULES () "" "(RULES a -> <b>\n x -> <y>)"
                 @?= Right [
-                    Rule 
-                    (Term "add" [Term "zero" [], Term "y" []])
-                    [Term "y" []]
-                    [] -- no conds
-                    ,
-                    Rule
-                    (Term "add" [Term "succ" [Term "x" []], Term "y" []])
-                    [Term "succ" [Term "z" []]]
-                    [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
+                    Rule (Term "a" Nothing) [Term "b" Nothing] Nothing,
+                    Rule (Term "x" Nothing) [Term "y" Nothing] Nothing
                     ],
-            testCase "add example rule 2 (RULES)" $
-                runParser parseRules () "" "(RULES \nadd(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z> \n )"
-                @?= Right ( Rules [
-                    Rule 
-                    (Term "add" [Term "zero" [], Term "y" []])
-                    [Term "y" []]
-                    [] -- no conds
-                    ,
-                    Rule
-                    (Term "add" [Term "succ" [Term "x" []], Term "y" []])
-                    [Term "succ" [Term "z" []]]
-                    [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
-                    ])
+            testCase "add example rule" $
+                let res = runParser parseRuleDef () "" "add(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>"
+                    left = Term "add" (Just [Term "succ" (Just [Term "x" Nothing]), Term "y" Nothing])
+                    right = Term "succ" (Just [Term "z" Nothing])
+                    cleft = Term "add" (Just [Term "x" Nothing, Term "y" Nothing])
+                    cright = Term "z" Nothing
+                in
+                    res @?=
+                    Right (Rule left [right] (Just [Cond cleft [cright]]))
+            
+                    
+                
+            -- testCase "add example rule 2" $
+            --     runParser parseRuleList () "" "add(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>\n"
+            --     @?= Right [
+            --         Rule 
+            --         (Term "add" [Term "zero" [], Term "y" []])
+            --         [Term "y" []]
+            --         [] -- no conds
+            --         ,
+            --         Rule
+            --         (Term "add" [Term "succ" [Term "x" []], Term "y" []])
+            --         [Term "succ" [Term "z" []]]
+            --         [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
+            --         ],
+            -- testCase "add example rule 2 (RULES)" $
+            --     runParser parseRules () "" "(RULES \nadd(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z> \n )"
+            --     @?= Right ( Rules [
+            --         Rule 
+            --         (Term "add" [Term "zero" [], Term "y" []])
+            --         [Term "y" []]
+            --         [] -- no conds
+            --         ,
+            --         Rule
+            --         (Term "add" [Term "succ" [Term "x" []], Term "y" []])
+            --         [Term "succ" [Term "z" []]]
+            --         [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
+            --         ])
         ],
-        testGroup "COMMENT" 
-        [
+        -- testGroup "COMMENT" 
+        -- [
 
-        ],
+        -- ],
         testGroup "CCS"
         [
             testCase "add" $ do
                 tmp <- (fmap parseProgram $ readFile "examples/add.ccs")
-                tmp @?= Right (Ccs 
-                    (Var ["x","y","z"])
-                    (Sig [("add",2,1)]) 
-                    (Sort [
-                        ("zero",[],["Nat"]),
-                        ("succ",["Nat"],["Nat"]),
-                        ("add",["Nat"],["Nat","Nat"])
+                let var = [Var "x", Var "y", Var "z"]
+                    sig = [Sig "add" 2 1]
+                    sort = [
+                        Sort "zero" Nothing ["Nat"],
+                        Sort "succ" (Just ["Nat"]) ["Nat"],
+                        Sort "add" (Just ["Nat", "Nat"]) ["Nat", "Nat"]
                         ]
-                    ) 
-                    (Rules [
-                        Rule (Term "add" [Term "zero" [],Term "y" []]) [Term "y" []] [],
-                        Rule (Term "add" [Term "succ" [Term "x" []],Term "y" []]) [Term "succ" [Term "z" []]] [Cond (Term "add" [Term "x" [],Term "y" []]) [Term "z" []]]
+                    rules = [
+                        Rule 
+                            (Term "add" (Just [Term "zero" Nothing, Term "y" Nothing]))
+                            ([Term "y" Nothing])
+                            Nothing
+                        ,Rule
+                            (Term "add" (Just [Term "succ"(Just [Term "x" Nothing]), Term "y" Nothing]))
+                            ([Term "succ" (Just [Term "z" Nothing])])
+                            (Just [Cond (Term "add" (Just [Term "x" Nothing, Term "y" Nothing])) [Term "z" Nothing]])
                         ]
-                    )
-                    )
-                -- Right (
-                --     Ccs 
-                --         (Var []) 
-                --         (Sig []) 
-                --         (Sort []) 
-                --         (Rules [])
-                --     )
+                    in tmp @?= Right (Ccs var sig sort rules)
         ]
     ]
 

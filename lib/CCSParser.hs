@@ -53,48 +53,48 @@ symbol sym = lexeme $ do
 
 parseCCS :: Parser CCS
 parseCCS = lexeme $ do
-    var <- parseVar
-    sig <- parseSig
-    sort <- parseSort
-    rules <- parseRules
+    var <- parseVAR
+    sig <- parseSIG
+    sort <- parseSORT
+    rules <- parseRULES
     return $ Ccs var sig sort rules
 
 -- Parse the VAR section of the program
-parseVar :: Parser VAR
-parseVar = lexeme $ do
+parseVAR :: Parser [Var]
+parseVAR = lexeme $ do
     symbol "("
     symbol  "VAR"
     ids <- parseIdList
     symbol ")"
-    return $ Var ids
+    return $ map Var ids
 
 
 -- Parse the SIG section of the program
-parseSig :: Parser SIG
-parseSig = lexeme $ do
+parseSIG :: Parser [Sig]
+parseSIG = lexeme $ do
     symbol "("
     symbol "SIG"
-    funs <- parseFunList
+    sigs <- parseSigList
     symbol ")"
-    return $ Sig funs
+    return sigs
 
 -- Parse the SORT section of the program
-parseSort :: Parser SORT
-parseSort = lexeme $ do
+parseSORT :: Parser [Sort]
+parseSORT = lexeme $ do
     symbol "("
     symbol "SORT"
     sorts <- parseSortList
     symbol ")"
-    return $ Sort sorts
+    return sorts
 
 -- Parse the RULES section of the program
-parseRules :: Parser RULES
-parseRules = lexeme $ do
+parseRULES :: Parser [Rule]
+parseRULES = lexeme $ do
     symbol "("
     symbol "RULES"
     rules <- parseRuleList
     symbol ")"
-    return $ Rules rules
+    return rules
 
 
 {------------------------------------------------------------------------------
@@ -114,33 +114,35 @@ parseId = lexeme $ do
     many1 $ oneOf $ ['a'..'z'] ++ ['A'..'Z']
 
 -- funlist  ::= ε | fun funlist
-parseFunList :: Parser [(Id, Int, Int)]
-parseFunList = lexeme $ do many parseFun
+parseSigList :: Parser [Sig]
+parseSigList = lexeme $ do many parseSig
 
 -- fun      ::= (id int int)
-parseFun :: Parser (Id, Int, Int)
-parseFun = lexeme $ do
+parseSig :: Parser Sig
+parseSig = lexeme $ do
     symbol "("
     id      <- parseId
     arity   <- lexeme $ many1 digit
     coarity <- lexeme $ many1 digit
     symbol ")"
-    return (id, read arity, read coarity)
+    return $ Sig id (read arity) (read coarity)
 
 -- sortlist ::= ε | sort sortlist
-parseSortList :: Parser [(Id, [Id], [Id])]
+parseSortList :: Parser [Sort]
 parseSortList = lexeme $ do many parseSortDef
 
 -- sort     ::= (id idlist -> idlist)
-parseSortDef :: Parser (Id, [Id], [Id])
+parseSortDef :: Parser Sort
 parseSortDef = lexeme $ do
     symbol "("
     id  <- parseId
-    ins <- parseIdList <|> return []
+    ins <- parseIdList 
     symbol "->"
     outs <- parseIdList
     symbol ")"
-    return (id, ins, outs)
+    case ins of
+        [] -> return $ Sort id Nothing outs
+        ins' -> return $ Sort id (Just ins') outs
 
 -- rulelist ::= ε | rule rulelist
 parseRuleList :: Parser [Rule]
@@ -158,11 +160,12 @@ parseRuleDef = lexeme $ do
     return $ Rule left right conds
 
 -- conds    ::= ε | <= condlist
-parseConds :: Parser [Cond]
+parseConds :: Parser (Maybe [Cond])
 parseConds =
-    option [] $ do
+    option Nothing $ do
         symbol "<="
-        parseCondList
+        conds <- parseCondList
+        return $ Just conds
 
 -- condlist ::= cond | cond ^ condlist
 parseCondList :: Parser [Cond]
@@ -195,10 +198,10 @@ parseTerm = lexeme $ do
             terms <- parseTermList
             whitespace
             char ')'
-            return $ Term id terms
+            return $ Term id (Just terms)
         )
     <|> do  id <- parseId
-            return $ Term id []
+            return $ Term id Nothing
 
 
 

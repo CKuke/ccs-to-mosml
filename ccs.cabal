@@ -14,6 +14,7 @@ library
   exposed-modules:
       CCSAst
       CCSParser
+      CCSValidate
   other-modules:
       Paths_ccs
   hs-source-dirs:
