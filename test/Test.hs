@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant bracket" #-}
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 module Main where
 
 import Test.Tasty
@@ -8,25 +11,27 @@ import Text.Parsec.Error
 
 import CCSAst
 import CCSParser
+import CCSValidate
+
 
 parserTest = testGroup "Parser tests"
     [
         testGroup "VAR"
         [
             testCase "empty 1" $
-                runParser parseVAR () "" "(VAR)" 
+                runParser parseVAR () "" "(VAR)"
                 @?= Right [],
             testCase "empty 2" $
-                runParser parseVAR () "" "(VAR )" 
+                runParser parseVAR () "" "(VAR )"
                 @?= Right [],
             testCase "var 1" $
-                runParser parseVAR () "" "(VAR a )" 
+                runParser parseVAR () "" "(VAR a )"
                 @?= Right [Var "a"],
             testCase "var 2" $
-                runParser parseVAR () "" "(VAR a b)" 
+                runParser parseVAR () "" "(VAR a b)"
                 @?= Right [Var "a", Var "b"]
         ],
-        testGroup "SIG" 
+        testGroup "SIG"
         [
             testCase "single fun" $
                 runParser parseSig () "" "(add 2 1)"
@@ -35,7 +40,7 @@ parserTest = testGroup "Parser tests"
                 runParser parseSIG () "" "(SIG (add 2 1)\n(sub 42 90) )"
                 @?= Right [Sig "add" 2 1, Sig "sub" 42 90]
         ],
-        testGroup "SORT" 
+        testGroup "SORT"
         [
             testCase "single sort" $
                 runParser parseSORT () "" "(SORT (succ Nat -> Nat))"
@@ -47,7 +52,7 @@ parserTest = testGroup "Parser tests"
                 runParser parseSORT () "" "(SORT (z -> Nat)\n(succ Nat -> Nat))"
                 @?= Right [Sort "z" Nothing ["Nat"], Sort "succ" (Just ["Nat"]) ["Nat"]]
         ],
-        testGroup "RULE" 
+        testGroup "RULE"
         [
             testCase "term 1" $
                 runParser parseTerm () "" "ident"
@@ -63,13 +68,13 @@ parserTest = testGroup "Parser tests"
                 @?= Right [Term "a" Nothing, Term "b" Nothing, Term "c" Nothing],
             testCase "single cond" $
                 runParser parseCond () "" "add(a, b) -> <c>"
-                @?= Right (Cond 
-                    (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) 
+                @?= Right (Cond
+                    (Term "add" (Just [Term "a" Nothing, Term "b" Nothing]))
                     [Term "c" Nothing]),
             testCase "single cond more output" $
                 runParser parseCond () "" "add(a, b) -> <x, s(y)>"
-                @?= Right (Cond 
-                    (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) 
+                @?= Right (Cond
+                    (Term "add" (Just [Term "a" Nothing, Term "b" Nothing]))
                     [Term "x" Nothing, Term "s" (Just [Term "y" Nothing])]),
             testCase "cond conjunction" $
                 runParser parseCondList () "" "add(a,b) -> <c> ^ sub(x, y) -> <z>"
@@ -79,7 +84,7 @@ parserTest = testGroup "Parser tests"
                     ]),
             testCase "conds non empty" $
                 runParser parseConds () "" "<= add(a, b) -> <c>"
-                @?= Right ( Just 
+                @?= Right ( Just
                     [Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "c" Nothing]]
                     ),
             testCase "conds empty" $
@@ -114,9 +119,9 @@ parserTest = testGroup "Parser tests"
                 in
                     res @?=
                     Right (Rule left [right] (Just [Cond cleft [cright]]))
-            
-                    
-                
+
+
+
             -- testCase "add example rule 2" $
             --     runParser parseRuleList () "" "add(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>\n"
             --     @?= Right [
@@ -151,7 +156,7 @@ parserTest = testGroup "Parser tests"
         testGroup "CCS"
         [
             testCase "add" $ do
-                tmp <- (fmap parseProgram $ readFile "examples/add.ccs")
+                tmp <- (parseProgram <$> readFile "examples/add.ccs")
                 let var = [Var "x", Var "y", Var "z"]
                     sig = [Sig "add" 2 1]
                     sort = [
@@ -160,7 +165,7 @@ parserTest = testGroup "Parser tests"
                         Sort "add" (Just ["Nat", "Nat"]) ["Nat", "Nat"]
                         ]
                     rules = [
-                        Rule 
+                        Rule
                             (Term "add" (Just [Term "zero" Nothing, Term "y" Nothing]))
                             ([Term "y" Nothing])
                             Nothing
@@ -173,7 +178,55 @@ parserTest = testGroup "Parser tests"
         ]
     ]
 
+validateTests = testGroup "Validation tests"
+    [
+        testGroup "Duplicates" 
+        [
+            testCase "dup var 1" $
+                let res = validateCCS (Ccs [Var "a", Var "a"] [] [] [])
+                in case res of
+                    Nothing -> assertFailure ""
+                    Just _ -> return ()
+            ,
+            testCase "dup var 2" $
+                let res = validateCCS (Ccs [Var "a", Var "a",Var "b", Var "b"] [] [] [])
+                in case res of
+                    Nothing -> assertFailure ""
+                    Just _ -> return ()                    
+            ,
+            testCase "dup sig 1" $
+                let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "a" 2 2] [] [])
+                in case res of
+                    Nothing -> assertFailure ""
+                    Just _ -> return ()        
+            ,
+            testCase "dup sig 2" $
+                let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "a" 2 2, Sig "b" 1 1, Sig "b" 2 2] [] [])
+                in case res of
+                    Nothing -> assertFailure ""
+                    Just _ -> return ()
+            ,
+            testCase "dup sig 3" $
+                let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "a" 2 2, Sig "c" 1 1, Sig "b" 2 2] [] [])
+                in case res of
+                    Nothing -> assertFailure ""
+                    Just _ -> return ()
+            ,
+            testCase "dup sig 4" $
+                let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "b" 1 1, Sig "c" 2 2] [] [])
+                in case res of
+                    Nothing -> return ()
+                    Just _ -> assertFailure ""
+            ,
+            testCase "undefined var" $
+                let res = validateCCS (Ccs [Var "a"] [] [] [Rule (Term "add" Nothing) [Term "b" Nothing] Nothing])
+                in case res of
+                    Nothing -> assertFailure ""
+                    Just _ -> return ()
+        ]
+    ]
+
 
 -- Combine all the test groups and run 
-allTests = testGroup "All Tests" [parserTest]
+allTests = testGroup "All Tests" [parserTest, validateTests]
 main = defaultMain allTests

@@ -51,21 +51,3 @@ data Cond = Cond Term [Term]
 data CCS = Ccs [Var] [Sig] [Sort] [Rule]
     deriving (Eq, Read, Show)
 
-
-
-
-
-
-
-
-
-
-
-
-------------------------------------------------------
-
--- data TransTask = 
---     Datatype [Sort]
---     | Function [Rule]
-
-
