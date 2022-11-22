@@ -9,7 +9,7 @@ import Data.List
 This module will preprocess the AST and produce a list of Tasks that will then
 be translated to the MosML source code.
 
-Datatype values will be converted to MosML dataatypes and Functions to MosML functions
+Datatype values will be converted to MosML datatypes and Functions to MosML functions
 -}
 
 
@@ -29,7 +29,6 @@ datatype Nat
 -}
 data Constructor = Constructor Id (Maybe [Id])
     deriving (Eq, Read, Show)
-
 
 
 toDatatype :: CCS -> [Task]
@@ -57,6 +56,36 @@ toDatatype' (id:ids) sorts =
     in Datatype id const : toDatatype' ids sorts''
         
 
+
+
+toFunction :: CCS -> [Task]
+toFunction (Ccs _ sigs _ rules) =
+    let sigIds = getSigIds sigs
+    in toFunction' sigIds rules
+
+toFunction' :: [Id] -> [Rule] -> [Task]
+toFunction' [] _ = []
+toFunction' (id:ids) rules =
+    let (rules', rules'') = partition (\(Rule (Term rid _) _ _) -> rid == id) rules
+        fun = Function id rules'
+    in fun : toFunction' ids rules''
+
+
+{-
+Functions for conversion of different parts into MosML code
+-}
+
+
+
+
+
+
+
+
+
+{-
+Utility functions
+-}
 
 getReturnSort :: [Sort] -> [Id]
 getReturnSort [] = []

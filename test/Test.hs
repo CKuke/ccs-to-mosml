@@ -13,8 +13,6 @@ import CCSAst
 import CCSParser
 import CCSValidate
 import CCSMosml 
-import CCSMosml (Constructor(Constructor), Task (Datatype))
-
 
 parserTest = testGroup "Parser tests"
     [
@@ -230,25 +228,48 @@ validateTests = testGroup "Validation tests"
 
 mosmlTests = testGroup "MosML Tests" 
     [
-        testCase "toDatatype' 1" $
-            let ids = ["unum"]
-                sorts = [Sort "C" Nothing ["unum"]]
-                res = toDatatype' ids sorts
-            in res @?= [Datatype "unum" [Constructor "C" Nothing]]
-        ,
-        testCase "toDatatype' 2" $
-            let ids = ["unum"]
-                sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"]]
-                res = toDatatype' ids sorts
-            in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])]]
-        ,
-        testCase "toDatatype' 3" $
-            let ids = ["unum", "list"]
-                sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"], Sort "nil" Nothing ["list"]]
-                res = toDatatype' ids sorts
-            in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])],
-                        Datatype "list" [Constructor "nil" Nothing]]
-
+        testGroup "Preprocessing" 
+        [
+            testCase "toDatatype' 1" $
+                let ids = ["unum"]
+                    sorts = [Sort "C" Nothing ["unum"]]
+                    res = toDatatype' ids sorts
+                in res @?= [Datatype "unum" [Constructor "C" Nothing]]
+            ,
+            testCase "toDatatype' 2" $
+                let ids = ["unum"]
+                    sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"]]
+                    res = toDatatype' ids sorts
+                in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])]]
+            ,
+            testCase "toDatatype' 3" $
+                let ids = ["unum", "list"]
+                    sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"], Sort "nil" Nothing ["list"]]
+                    res = toDatatype' ids sorts
+                in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])],
+                            Datatype "list" [Constructor "nil" Nothing]]
+            ,
+            testCase "tofunction' 1" $
+                let ids = ["add"]
+                    rules = [Rule (Term "add" Nothing) [Term "x" Nothing] Nothing]
+                    res = toFunction' ids rules
+                in res @?= [Function "add" rules]
+            ,
+            testCase "tofunction' 2" $
+                let ids = ["add"]
+                    rules = [Rule (Term "add" Nothing) [Term "x" Nothing] Nothing,
+                            Rule (Term "add" Nothing) [Term "y" Nothing] Nothing]
+                    res = toFunction' ids rules
+                in res @?= [Function "add" rules]
+            ,
+            testCase "tofunction' 3" $
+                let ids = ["add", "sub"]
+                    rules1 = [Rule (Term "add" Nothing) [Term "x" Nothing] Nothing,
+                            Rule (Term "add" Nothing) [Term "y" Nothing] Nothing]
+                    rules2 = [Rule (Term "sub" Nothing) [Term "x" Nothing] Nothing]
+                    res = toFunction' ids (rules1 ++ rules2)
+                in res @?= [Function "add" rules1, Function "sub" rules2]
+        ]
     ]
 
 
