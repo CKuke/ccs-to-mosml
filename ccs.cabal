@@ -15,8 +15,8 @@ library
       CCSAst
       CCSParser
       CCSValidate
-  other-modules:
       CCSMosml
+  other-modules:
       Paths_ccs
   hs-source-dirs:
       lib

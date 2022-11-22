@@ -12,6 +12,8 @@ import Text.Parsec.Error
 import CCSAst
 import CCSParser
 import CCSValidate
+import CCSMosml 
+import CCSMosml (Constructor(Constructor), Task (Datatype))
 
 
 parserTest = testGroup "Parser tests"
@@ -162,7 +164,7 @@ parserTest = testGroup "Parser tests"
                     sort = [
                         Sort "zero" Nothing ["Nat"],
                         Sort "succ" (Just ["Nat"]) ["Nat"],
-                        Sort "add" (Just ["Nat", "Nat"]) ["Nat", "Nat"]
+                        Sort "add" (Just ["Nat", "Nat"]) ["Nat"]
                         ]
                     rules = [
                         Rule
@@ -226,7 +228,30 @@ validateTests = testGroup "Validation tests"
         ]
     ]
 
+mosmlTests = testGroup "MosML Tests" 
+    [
+        testCase "toDatatype' 1" $
+            let ids = ["unum"]
+                sorts = [Sort "C" Nothing ["unum"]]
+                res = toDatatype' ids sorts
+            in res @?= [Datatype "unum" [Constructor "C" Nothing]]
+        ,
+        testCase "toDatatype' 2" $
+            let ids = ["unum"]
+                sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"]]
+                res = toDatatype' ids sorts
+            in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])]]
+        ,
+        testCase "toDatatype' 3" $
+            let ids = ["unum", "list"]
+                sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"], Sort "nil" Nothing ["list"]]
+                res = toDatatype' ids sorts
+            in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])],
+                        Datatype "list" [Constructor "nil" Nothing]]
+
+    ]
+
 
 -- Combine all the test groups and run 
-allTests = testGroup "All Tests" [parserTest, validateTests]
+allTests = testGroup "All Tests" [parserTest, validateTests, mosmlTests]
 main = defaultMain allTests

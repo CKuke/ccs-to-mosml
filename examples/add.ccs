@@ -3,7 +3,7 @@
 (SORT
     (zero   -> Nat)
     (succ   Nat -> Nat)
-    (add    Nat Nat -> Nat Nat)
+    (add    Nat Nat -> Nat)
 )
 (RULES
     add(zero, y) -> <y>

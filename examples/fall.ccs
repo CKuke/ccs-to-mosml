@@ -1,0 +1,68 @@
+(VAR v h t vn hn ht x y z)
+(SIG
+    (fall 3 2)
+    (height 2 1)
+    (sub 2 1)
+    (add 2 1)
+)
+(SORT
+    (zero   -> Nat)
+    (s      Nat -> Nat)
+    (fall   Nat Nat Nat -> Nat Nat)
+    (height Nat Nat -> Nat)
+    (add    Nat Nat -> Nat)
+    (sub    Nat Nat -> Nat)
+)
+(RULES
+  fall(v,h,zero) -> <v,h>
+  fall(v,h,s(t)) -> <v,h> <= add(v,s(s(s(s(s(zero)))))) -> <vn> ^
+                               height(h, vn) -> <hn> ^
+                               fall(vn,hn,t) -> <v,h>
+
+  height(h, vn) -> <hn> <= add(h, s(s(s(s(s(zero)))))) -> <ht> ^
+                           sub(ht, vn) -> <hn>
+  sub(zero, y) -> <y>
+  sub(s(x), s(z)) -> <y> <= sub(x, z) -> <y>
+
+  add(zero, y) -> <y>
+  add(s(x), y) -> <s(z)> <= add(x,y) -> <z> 
+)
+(COMMENT
+  author:      [1]
+ 
+  description: free fall simulation
+               v = velocity
+               h = height
+               t = time
+   
+               s*5(0) should have been s*10(0)
+
+  properties of the system:
+    functional, non-reversible (because output overlap)
+
+  [1] M. H. Kirkeby and R. Gl ̈uck, “Semi-inversion of conditional 
+      constructor term rewriting systems,” in Logic-Based Program 
+      Synthesis and Transformation (M. Gabbrielli, ed.), (Cham), 
+      pp. 243–259, Springer International Publishing, 2020
+
+
+    datatype Nat = 
+        | zero
+        | s of Nat
+    
+    fun fall v h zero = (v, h)
+      | fall v h (s t) =
+        let val vn = add v (s(s(s(s(s(zero)))))) 
+            val hn = height h vn
+            val (v, h) = fall vn hn t
+        in (v, h)
+
+    fun height h vn =
+        let val ht = add h (s(s(s(s(s(zero))))))
+            val hn = sub ht vn
+        in hn
+    
+    // add and sub as normal
+
+)           
+

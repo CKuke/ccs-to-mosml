@@ -13,6 +13,7 @@ library:
     - CCSAst
     - CCSParser
     - CCSValidate
+    - CCSMosml
 
 executable:
     main:                Main.hs
