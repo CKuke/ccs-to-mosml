@@ -13,6 +13,7 @@ import CCSAst
 import CCSParser
 import CCSValidate
 import CCSMosml 
+import CCSMosml (constructorsToStrings)
 
 parserTest = testGroup "Parser tests"
     [
@@ -269,6 +270,49 @@ mosmlTests = testGroup "MosML Tests"
                     rules2 = [Rule (Term "sub" Nothing) [Term "x" Nothing] Nothing]
                     res = toFunction' ids (rules1 ++ rules2)
                 in res @?= [Function "add" rules1, Function "sub" rules2]
+        ],
+        testGroup "Translation"
+        [
+            testCase "constructors To Strings 1" $
+                let cons = [Constructor "z" Nothing]
+                    res = constructorsToStrings cons
+                in res @?= ["z"]
+            ,
+            testCase "constructors To Strings 2" $
+                let cons = [Constructor "z" Nothing, Constructor "s" (Just ["x", "y", "z"])]
+                    res = constructorsToStrings cons
+                in res @?= ["z", "s of x * y * z"]
+            ,
+            testCase "task to string - datatype 1" $ 
+                let tasks = [Datatype "unum" ([Constructor "z" Nothing])]
+                    res = taskToString tasks
+                in res @?= "datatype unum =\n\tz"
+            ,
+            testCase "task to string - datatype 2" $ 
+                let tasks = [Datatype "unum" ([Constructor "z" Nothing, Constructor "s" (Just ["unum"])])]
+                    res = taskToString tasks
+                in res @?= "datatype unum =\n\tz\n\t| s of unum"
+            ,
+            testCase "term to string 1" $
+                let term = Term "add" Nothing
+                    res = termToString term
+                in res @?= "add"
+            ,
+            testCase "term to string 2" $
+                let term = Term "add" (Just [Term "x" Nothing, Term "y" Nothing])
+                    res = termToString term
+                in res @?= "add x y"
+            ,
+            testCase "term to string 3" $
+                let term = Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing])
+                    res = termToString term
+                in res @?= "add (s x) y"
+            ,
+            testCase "term to string 4" $
+                let term = Term "add" (Just [Term "s" (Just [Term "s" (Just [Term "x" Nothing])]), Term "y" Nothing])
+                    res = termToString term
+                in res @?= "add (s (s x)) y"
+            -- TODO: Create tests for condsToStrings
         ]
     ]
 

@@ -1,9 +1,12 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use unwords" #-}
 
 
 module CCSMosml where
 
 import CCSAst
 import Data.List
+import Control.Applicative (Alternative(empty))
 
 {-
 This module will preprocess the AST and produce a list of Tasks that will then
@@ -54,7 +57,7 @@ toDatatype' (id:ids) sorts =
     let (sorts', sorts'') = partition (\(Sort _ _ [ret]) -> ret == id) sorts
         const = map (\(Sort sid args _) -> Constructor sid args) sorts'
     in Datatype id const : toDatatype' ids sorts''
-        
+
 
 
 
@@ -75,13 +78,64 @@ toFunction' (id:ids) rules =
 Functions for conversion of different parts into MosML code
 -}
 
+taskToString :: [Task] -> String
+taskToString [] = ""
+taskToString (t:ts) =
+    case t of
+        Datatype id cons ->
+            let header = "datatype " ++ id ++ " =\n"
+                cons' = constructorsToStrings cons
+            in header ++ "\t" ++ intercalate "\n\t| " cons'
+        Function id rules ->
+            let header = "fun "
+                footer = "end"
+            in header ++ footer
+
+
+constructorsToStrings :: [Constructor] -> [String]
+constructorsToStrings [] = empty
+constructorsToStrings (c:cs) =
+    case c of
+        Constructor id Nothing -> id : constructorsToStrings cs
+        Constructor id (Just args) ->
+            let args' = intercalate " * " args
+            in (id ++ " of " ++ args') : constructorsToStrings cs
+
+
+-- rulesToStrings :: [Rule] -> [String]
+-- rulesToStrings [] = empty
+-- rulesToStrings (r:rs) =
+--     let (Rule t1 ts conds) = r
+--         pat = termToString t1
+--         stmts =
+--             case conds of
+--                 Nothing -> ""
+--                 (Just conds') -> 
+--                     let stmts = condsToStrings conds'
+--                     in "let " ++ intercalate "\n"
 
 
 
+termToString :: Term -> String
+termToString (Term id ts) =
+    case ts of
+        Nothing -> id
+        Just ts' ->
+            let tStrings = map ((\x-> if ' ' `elem` x then "("++x++")" else x) . termToString) ts'
+            in id ++ " " ++ intercalate " " tStrings
 
 
-
-
+condsToStrings :: [Cond] -> [String]
+condsToStrings [] = empty
+condsToStrings (c:cs) =
+    let (Cond exp vals) = c
+        vals' = case vals of
+            [v] -> termToString v
+            vs -> 
+                let tmp = intercalate ", " $ map termToString vals
+                in "("++tmp++")"
+        exp' = termToString exp
+    in ("val " ++ vals' ++ " = " ++ exp' ++ "\n") : condsToStrings cs
 
 {-
 Utility functions
@@ -89,7 +143,7 @@ Utility functions
 
 getReturnSort :: [Sort] -> [Id]
 getReturnSort [] = []
-getReturnSort (s:ss) = 
+getReturnSort (s:ss) =
     let (Sort _ _ [ret]) = s in
     ret : getReturnSort ss
 
