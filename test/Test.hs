@@ -231,49 +231,54 @@ mosmlTests = testGroup "MosML Tests"
     [
         testGroup "Preprocessing" 
         [
-            -- testCase "toDatatype' 1" $
-            --     let ids = ["unum"]
-            --         sorts = [Sort "C" Nothing ["unum"]]
-            --         res = toDatatype' ids sorts
-            --     in res @?= [Datatype "unum" [Constructor "C" Nothing]]
-            -- ,
-            -- testCase "toDatatype' 2" $
-            --     let ids = ["unum"]
-            --         sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"]]
-            --         res = toDatatype' ids sorts
-            --     in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])]]
-            -- ,
-            -- testCase "toDatatype' 3" $
-            --     let ids = ["unum", "list"]
-            --         sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"], Sort "nil" Nothing ["list"]]
-            --         res = toDatatype' ids sorts
-            --     in res @?= [Datatype "unum" [Constructor "z" Nothing, Constructor "s" (Just ["unum"])],
-            --                 Datatype "list" [Constructor "nil" Nothing]]
-            -- ,
-            -- testCase "tofunction' 1" $
-            --     let ids = ["add"]
-            --         rules = [Rule (Term "add" Nothing) [Term "x" Nothing] Nothing]
-            --         res = toFunction' ids rules
-            --     in res @?= [Function "add" rules]
-            -- ,
-            -- testCase "tofunction' 2" $
-            --     let ids = ["add"]
-            --         rules = [Rule (Term "add" Nothing) [Term "x" Nothing] Nothing,
-            --                 Rule (Term "add" Nothing) [Term "y" Nothing] Nothing]
-            --         res = toFunction' ids rules
-            --     in res @?= [Function "add" rules]
-            -- ,
-            -- testCase "tofunction' 3" $
-            --     let ids = ["add", "sub"]
-            --         rules1 = [Rule (Term "add" Nothing) [Term "x" Nothing] Nothing,
-            --                 Rule (Term "add" Nothing) [Term "y" Nothing] Nothing]
-            --         rules2 = [Rule (Term "sub" Nothing) [Term "x" Nothing] Nothing]
-            --         res = toFunction' ids (rules1 ++ rules2)
-            --     in res @?= [Function "add" rules1, Function "sub" rules2]
-            -- ,
-            -- testCase "toFunction 1" $
-            --     let rule = Rule 
-            --     let ccs = Ccs [] [ghjgh] [] []
+            testCase "Datatype 1" $
+                let sorts = [Sort "z" Nothing ["unum"]]
+                    ccs = Ccs [] [] sorts []
+                    res = ccsToTasks ccs
+                in res @?= [Datatype "unum" sorts]
+            ,
+            testCase "Datatype 2" $
+                let sorts = [Sort "s" (Just ["unum"]) ["unum"]]
+                    ccs = Ccs [] [] sorts []
+                    res = ccsToTasks ccs
+                in res @?= [Datatype "unum" sorts]
+            ,
+            testCase "Datatype 3" $
+                let sorts = [Sort "z" Nothing ["unum"], Sort "s" (Just ["unum"]) ["unum"]]
+                    ccs = Ccs [] [] sorts []
+                    res = ccsToTasks ccs
+                in res @?= [Datatype "unum" sorts]
+            ,
+            testCase "Datatype 4" $
+                let sort1 = Sort "z" Nothing ["Nat"]
+                    sort2 = Sort "s" (Just ["unum"]) ["unum"]
+                    ccs = Ccs [] [] [sort1, sort2] []
+                    res = ccsToTasks ccs
+                in res @?= [Datatype "Nat" [sort1], Datatype "unum" [sort2]]
+            ,
+            testCase "Function 1" $
+                let sigs = [Sig "add" 1 1]
+                    rules = [
+                        Rule (Term "add" Nothing) [Term "z" Nothing] Nothing
+                        ]
+                    res = ccsToTasks $ Ccs [] sigs [] rules
+                in res @?= [Function "add" rules]
+            ,
+            testCase "Function 2" $
+                let sigs = [Sig "add" 1 1]
+                    rules = [
+                        Rule (Term "add" Nothing) [Term "z" Nothing] Nothing,
+                        Rule (Term "add" Nothing) [Term "s" (Just [Term "z" Nothing])] Nothing                     
+                        ]
+                    res = ccsToTasks $ Ccs [] sigs [] rules
+                in res @?= [Function "add" rules]
+            ,
+            testCase "Function 3" $
+                let sigs = [Sig "add" 1 1, Sig "sub" 2 2]
+                    rule1 = Rule (Term "add" Nothing) [Term "z" Nothing] Nothing
+                    rule2 = Rule (Term "sub" Nothing) [Term "s" (Just [Term "z" Nothing])] Nothing                     
+                    res = ccsToTasks $ Ccs [] sigs [] [rule1, rule2]
+                in res @?= [Function "add" [rule1], Function "sub" [rule2]]
         ],
         testGroup "Translation"
         [
@@ -391,91 +396,70 @@ mosmlTests = testGroup "MosML Tests"
                                    Cond (Term "a" Nothing) [Term "it" Nothing]])
                     (a,w) = evalRWS (ruleToString rule) [] ()
                 in a @?= exp
-
-            -- TODO: add tests for tasksToString
-
-
-            -- testCase "constructors To Strings 1" $
-            --     let cons = [Constructor "z" Nothing]
-            --         res = constructorsToStrings cons
-            --     in res @?= ["z"]
-            -- ,
-            -- testCase "constructors To Strings 2" $
-            --     let cons = [Constructor "z" Nothing, Constructor "s" (Just ["x", "y", "z"])]
-            --         res = constructorsToStrings cons
-            --     in res @?= ["z", "s of x * y * z"]
-            -- ,
-            -- testCase "task to string - datatype 1" $ 
-            --     let tasks = [Datatype "unum" ([Constructor "z" Nothing])]
-            --         res = taskToString tasks
-            --     in res @?= "datatype unum =\n\tz"
-            -- ,
-            -- testCase "task to string - datatype 2" $ 
-            --     let tasks = [Datatype "unum" ([Constructor "z" Nothing, Constructor "s" (Just ["unum"])])]
-            --         res = taskToString tasks
-            --     in res @?= "datatype unum =\n\tz\n\t| s of unum"
-            -- ,
-            -- testCase "term to string 1" $
-            --     let term = Term "add" Nothing
-            --         res = termToString term
-            --     in res @?= "add"
-            -- ,
-            -- testCase "term to string 2" $
-            --     let term = Term "add" (Just [Term "x" Nothing, Term "y" Nothing])
-            --         res = termToString term
-            --     in res @?= "add x y"
-            -- ,
-            -- testCase "term to string 3" $
-            --     let term = Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing])
-            --         res = termToString term
-            --     in res @?= "add (s x) y"
-            -- ,
-            -- testCase "term to string 4" $
-            --     let term = Term "add" (Just [Term "s" (Just [Term "s" (Just [Term "x" Nothing])]), Term "y" Nothing])
-            --         res = termToString term
-            --     in res @?= "add (s (s x)) y"
-            -- ,
-            -- testCase "term to string 5" $
-            --     let term = Term "s" (Just [Term "x" Nothing])
-            --         res = termToString term
-            --     in res @?= "s x"
-            -- ,
-            -- testCase "term to string 6" $
-            --     let term = Term "s" (Just [Term "s" (Just [Term "z" Nothing])])
-            --         res = termToString term
-            --     in res @?= "s (s z)"
-            -- ,
-            -- testCase "conds to string 1" $
-            --     let conds = [Cond (Term "add" Nothing) [Term "x" Nothing]]
-            --         res = condsToStrings conds
-            --     in res @?= ["val x = add\n"]
-            -- ,
-            -- testCase "conds to string 2" $
-            --     let conds = [Cond (Term "add" Nothing) [Term "x" Nothing, Term "y" Nothing]]
-            --         res = condsToStrings conds
-            --     in res @?= ["val (x, y) = add\n"]
-            -- ,
-            -- testCase "conds to string 3" $
-            --     let conds = [Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "x" Nothing, Term "y" Nothing]]
-            --         res = condsToStrings conds
-            --     in res @?= ["val (x, y) = add a b\n"]
-            -- ,
-            -- testCase "conds to string 4" $
-            --     let conds = [Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing]]
-            --         res = condsToStrings conds
-            --     in res @?= ["val (s x, y) = add a b\n"]
-            -- ,
-            -- testCase "conds to string 5" $
-            --     let conds = [Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "s" (Just [Term "x" Nothing])]]
-            --         res = condsToStrings conds
-            --     in res @?= ["val s x = add a b\n"]
-            -- ,
-            -- testCase "conds to string 5" $
-            --     let conds = [Cond (Term "add" (Just [Term "a" Nothing, Term "b" Nothing])) [Term "s" (Just [Term "s" (Just [Term "x" Nothing])])]]
-            --         res = condsToStrings conds
-            --     in res @?= ["val s (s x) = add a b\n"]
-            -- TODO: Create tests for rules
-            -- TODO: Create tests for Functions
+            ,
+            testCase "Function to string 1" $
+                let exp = "fun add z y = y"
+                    fun = Function "add" [
+                            Rule 
+                                (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
+                                [Term "y" Nothing]
+                                Nothing
+                            ]
+                    (a,_) = evalRWS (taskToString fun) [] ()
+                in a @?= exp
+            ,
+            testCase "Function to string 2" $
+                let exp = "fun add (s x) y = let val z = add x y in s a"
+                    fun = Function "add" [
+                            Rule 
+                                (Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing]))
+                                [Term "s" (Just [Term "a" Nothing])]
+                                (Just [Cond (Term "add" (Just [Term "x" Nothing, Term "y" Nothing])) 
+                                       [Term "z" Nothing]
+                                    ])
+                            ]
+                    (a,_) = evalRWS (taskToString fun) [] ()
+                in a @?= exp
+            ,
+            testCase "Function to string 3" $
+                let exp = "fun add z y = y\n\t|add (s x) y = let val z = add x y in s a"
+                    fun = Function "add" [
+                            Rule 
+                                (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
+                                [Term "y" Nothing]
+                                Nothing
+                            ,
+                            Rule 
+                                (Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing]))
+                                [Term "s" (Just [Term "a" Nothing])]
+                                (Just [Cond (Term "add" (Just [Term "x" Nothing, Term "y" Nothing])) 
+                                       [Term "z" Nothing]
+                                    ])
+                            ]
+                    (a,_) = evalRWS (taskToString fun) [] ()
+                in a @?= exp
+            ,
+            testCase "Multiple Tasks 1" $
+                let exp = "datatype unum =\n\tz\n\t|s of unum\n\nfun add z y = y\n\t|add (s x) y = let val z = add x y in s a"
+                    fun = Function "add" [
+                            Rule 
+                                (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
+                                [Term "y" Nothing]
+                                Nothing
+                            ,
+                            Rule 
+                                (Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing]))
+                                [Term "s" (Just [Term "a" Nothing])]
+                                (Just [Cond (Term "add" (Just [Term "x" Nothing, Term "y" Nothing])) 
+                                       [Term "z" Nothing]
+                                    ])
+                            ]
+                    dat = Datatype "unum" [
+                                Sort "z" Nothing ["unum"],
+                                Sort "s" (Just ["unum"]) ["unum"]
+                            ]
+                    a = translate [dat, fun]
+                in a @?= exp
         ]
     ]
 

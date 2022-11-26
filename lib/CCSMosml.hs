@@ -5,7 +5,7 @@ module CCSMosml where
 
 import CCSAst
 import Control.Monad.Trans.RWS.Lazy
-import Data.List (intercalate)
+import Data.List
 
 
 
@@ -22,9 +22,52 @@ at the current state does not represent a MosML datatype very well
 data Task =
       Datatype Id [Sort]
     | Function Id [Rule]
+    deriving(Eq, Show)
 
 
 type Builder = RWS [Task] () ()
+
+
+ccsToTasks :: CCS -> [Task]
+ccsToTasks (Ccs _ sigs sorts rules) =
+    let 
+        -- Find the sorts describing MosML datatypes
+        sigIds   = map (\(Sig id _ _) -> id) sigs
+        sortIds  = map (\(Sort id _ _) -> id) sorts
+        sortIds' = filter (`notElem` sigIds) sortIds
+        sorts'   = filter (\s -> let (Sort id _ _) = s in id `elem` sortIds') sorts
+        
+        -- Find how many unique datatypes that will be created
+        findTypes ss = -- function
+            case ss of 
+                [] -> []
+                (s:ss') -> let (Sort _ _ [ret]) = s 
+                           in ret : findTypes ss'
+        dTypeIds = nub $ findTypes sorts'
+        
+        -- Create the Datatype tasks
+        toDType ids ss =
+            case (ids, ss) of
+                ([], _) -> []
+                (id:ids', ss) ->
+                    let (ss', ss'') = partition (\(Sort _ _ [ret]) -> ret == id) ss
+                    in Datatype id ss' : toDType ids' ss''
+        dTypeTasks = toDType dTypeIds sorts'
+
+        -- Create the function tasks
+        toFunction ids rs =
+            case (ids, rs) of
+                ([], _) -> []
+                (id:ids, rs) ->
+                    let (rs', rs'') = partition (\(Rule (Term rid _) _ _) -> rid==id) rs
+                    in Function id rs' : toFunction ids rs''
+        funTasks = toFunction sigIds rules
+    in 
+        dTypeTasks ++ funTasks
+
+
+
+
 
 
 translate :: [Task] -> String
@@ -37,7 +80,7 @@ tasksToString :: Builder String
 tasksToString = do
     tasks <- ask
     strings <- mapM taskToString tasks
-    return ""
+    return $ intercalate "\n\n" strings
 
 
 taskToString :: Task -> Builder String
@@ -47,7 +90,12 @@ taskToString task =
             let header = "datatype " ++ id ++ " =\n\t"
             constr <- mapM sortToString sorts
             return $ header ++ intercalate "\n\t|" constr
-        Function id rules -> return ""
+        Function id rules -> do
+            let header = "fun "
+            pats <- mapM ruleToString rules
+            let pats' = intercalate "\n\t|" pats
+            return $ "fun " ++ pats'
+            
 
 
 sortToString :: Sort -> Builder String
