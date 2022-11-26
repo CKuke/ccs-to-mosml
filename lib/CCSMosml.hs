@@ -70,9 +70,10 @@ ccsToTasks (Ccs _ sigs sorts rules) =
 
 
 
-translate :: [Task] -> String
-translate tasks =
-    let (a,_) = evalRWS tasksToString tasks ()
+translate :: CCS -> String
+translate ccs =
+    let tasks = ccsToTasks ccs
+        (a,_) = evalRWS tasksToString tasks ()
     in a
 
 
@@ -94,7 +95,7 @@ taskToString task =
             let header = "fun "
             pats <- mapM ruleToString rules
             let pats' = intercalate "\n\t|" pats
-            return $ "fun " ++ pats'
+            return $ "fun " ++ pats' ++ "\nend"
             
 
 

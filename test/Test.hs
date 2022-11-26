@@ -120,35 +120,6 @@ parserTest = testGroup "Parser tests"
                 in
                     res @?=
                     Right (Rule left [right] (Just [Cond cleft [cright]]))
-
-
-
-            -- testCase "add example rule 2" $
-            --     runParser parseRuleList () "" "add(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>\n"
-            --     @?= Right [
-            --         Rule 
-            --         (Term "add" [Term "zero" [], Term "y" []])
-            --         [Term "y" []]
-            --         [] -- no conds
-            --         ,
-            --         Rule
-            --         (Term "add" [Term "succ" [Term "x" []], Term "y" []])
-            --         [Term "succ" [Term "z" []]]
-            --         [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
-            --         ],
-            -- testCase "add example rule 2 (RULES)" $
-            --     runParser parseRules () "" "(RULES \nadd(zero, y) -> <y>\nadd(succ(x), y) -> <succ(z)> <= add(x,y) -> <z> \n )"
-            --     @?= Right ( Rules [
-            --         Rule 
-            --         (Term "add" [Term "zero" [], Term "y" []])
-            --         [Term "y" []]
-            --         [] -- no conds
-            --         ,
-            --         Rule
-            --         (Term "add" [Term "succ" [Term "x" []], Term "y" []])
-            --         [Term "succ" [Term "z" []]]
-            --         [Cond (Term "add" [Term "x" [], Term "y" []]) [Term "z" []]]
-            --         ])
         ],
         -- testGroup "COMMENT" 
         -- [
@@ -398,7 +369,7 @@ mosmlTests = testGroup "MosML Tests"
                 in a @?= exp
             ,
             testCase "Function to string 1" $
-                let exp = "fun add z y = y"
+                let exp = "fun add z y = y\nend"
                     fun = Function "add" [
                             Rule 
                                 (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
@@ -409,7 +380,7 @@ mosmlTests = testGroup "MosML Tests"
                 in a @?= exp
             ,
             testCase "Function to string 2" $
-                let exp = "fun add (s x) y = let val z = add x y in s a"
+                let exp = "fun add (s x) y = let val z = add x y in s a\nend"
                     fun = Function "add" [
                             Rule 
                                 (Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing]))
@@ -422,7 +393,7 @@ mosmlTests = testGroup "MosML Tests"
                 in a @?= exp
             ,
             testCase "Function to string 3" $
-                let exp = "fun add z y = y\n\t|add (s x) y = let val z = add x y in s a"
+                let exp = "fun add z y = y\n\t|add (s x) y = let val z = add x y in s a\nend"
                     fun = Function "add" [
                             Rule 
                                 (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
@@ -440,7 +411,7 @@ mosmlTests = testGroup "MosML Tests"
                 in a @?= exp
             ,
             testCase "Multiple Tasks 1" $
-                let exp = "datatype unum =\n\tz\n\t|s of unum\n\nfun add z y = y\n\t|add (s x) y = let val z = add x y in s a"
+                let exp = "datatype unum =\n\tz\n\t|s of unum\n\nfun add z y = y\n\t|add (s x) y = let val z = add x y in s a\nend"
                     fun = Function "add" [
                             Rule 
                                 (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
@@ -458,7 +429,7 @@ mosmlTests = testGroup "MosML Tests"
                                 Sort "z" Nothing ["unum"],
                                 Sort "s" (Just ["unum"]) ["unum"]
                             ]
-                    a = translate [dat, fun]
+                    (a,_) = evalRWS tasksToString [dat, fun] ()
                 in a @?= exp
         ]
     ]
