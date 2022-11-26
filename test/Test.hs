@@ -431,6 +431,9 @@ mosmlTests = testGroup "MosML Tests"
                             ]
                     (a,_) = evalRWS tasksToString [dat, fun] ()
                 in a @?= exp
+            -- ,
+            -- testCase "multiple return" $
+
         ]
     ]
 

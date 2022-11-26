@@ -124,7 +124,9 @@ condTostring :: Cond -> Builder String
 condTostring (Cond t1 ts) =
     do t1' <- termToString t1
        ts' <- mapM termToString ts
-       let ts'' = intercalate " " ts'
+       let ts'' = 
+            let tmp = intercalate ", " ts'
+            in if ',' `elem` tmp then "("++tmp++")" else tmp
        return $ "val " ++ ts'' ++ " = " ++ t1'
 
 -- add(z,y) -> <y> ===
@@ -137,8 +139,12 @@ ruleToString :: Rule -> Builder String
 ruleToString (Rule t1 ts conds) =
     do pat <- termToString t1 
        ret <- 
-            do ret <- mapM termToString ts
-               return $ intercalate " " ret
+            do ret  <- mapM termToString ts
+               let ret' = intercalate ", " ret
+               if ',' `elem` ret' then
+                    return $ "("++ret'++")"
+               else 
+                    return ret'
        stmts <-
             case conds of
                 Nothing -> return ""
