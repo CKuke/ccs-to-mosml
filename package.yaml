@@ -6,6 +6,7 @@ dependencies:
 - parsec
 - tasty
 - tasty-hunit
+- transformers
 
 library:
   source-dirs:          lib
@@ -18,6 +19,8 @@ library:
 executable:
     main:                Main.hs
     source-dirs:         src
+    dependencies:
+    - ccs 
 
 tests:
   blackbox-test:
