@@ -98,7 +98,7 @@ taskToString task =
             header <- get
             pats <- mapM ruleToString rules
             let pats' = intercalate "\n\t|" pats
-            put "and  "
+            put "and  " -- change the function "header"
             return $ header ++ pats'
             
 

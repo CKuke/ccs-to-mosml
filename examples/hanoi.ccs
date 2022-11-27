@@ -6,10 +6,10 @@
 (SORT
     (z                  -> unum)
     (s                  unum -> unum)
-    (nill               -> list)
-    (cons               unum list -> list)
-    (hanoi              unum list list list -> unum list list list)
-    (sourcetotarget     list list list -> list list list)
+    (nill               -> List)
+    (cons               unum List -> List)
+    (hanoi              unum List List List -> unum List List List)
+    (sourcetotarget     List List List -> List List List)
 )
 (RULES 
   	hanoi(z,source,helper,target) -> <z,source,helper,target>
