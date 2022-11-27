@@ -97,8 +97,10 @@ taskToString task =
         Function id rules -> do
             let header = "fun "
             pats <- mapM ruleToString rules
+            -- let (pats, ends) = unzip out
+            -- let end = last ends
             let pats' = intercalate "\n\t|" pats
-            return $ "fun " ++ pats' ++ "\nend"
+            return $ "fun " ++ pats'
             
 
 
@@ -161,7 +163,8 @@ ruleToString (Rule t1 ts conds) =
                 Just conds' ->
                     do ss <- mapM condTostring conds'
                        return $ "let " ++ intercalate "; " ss ++ " in "
-       return $ pat ++ " = " ++ stmts ++ ret
+       let end = if null stmts then "" else " end"
+       return $ pat ++ " = " ++ stmts ++ ret ++ end
        
 
 
