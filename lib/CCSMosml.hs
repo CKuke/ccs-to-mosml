@@ -25,10 +25,13 @@ data Task =
     deriving(Eq, Show)
 
 
-type Builder = RWS [Task] () ()
+-- The reader part (environment) is a list of all constructor ids such
+-- as cons, succ, nil and so on.
+type Builder = RWS [Id] () ()
 
 
-ccsToTasks :: CCS -> [Task]
+-- Returns the tasks to be translated and a list of all ids for constructors
+ccsToTasks :: CCS -> ([Task], [Id])
 ccsToTasks (Ccs _ sigs sorts rules) =
     let 
         -- Find the sorts describing MosML datatypes
@@ -63,7 +66,7 @@ ccsToTasks (Ccs _ sigs sorts rules) =
                     in Function id rs' : toFunction ids rs''
         funTasks = toFunction sigIds rules
     in 
-        dTypeTasks ++ funTasks
+        (dTypeTasks ++ funTasks, sortIds')
 
 
 
@@ -72,14 +75,14 @@ ccsToTasks (Ccs _ sigs sorts rules) =
 
 translate :: CCS -> String
 translate ccs =
-    let tasks = ccsToTasks ccs
-        (a,_) = evalRWS tasksToString tasks ()
+    let (tasks, cs) = ccsToTasks ccs
+        (a,_) = evalRWS (tasksToString tasks) cs ()
     in a
 
 
-tasksToString :: Builder String
-tasksToString = do
-    tasks <- ask
+tasksToString :: [Task] -> Builder String
+tasksToString tasks = do
+    -- tasks <- ask
     strings <- mapM taskToString tasks
     return $ intercalate "\n\n" strings
 
@@ -107,16 +110,23 @@ sortToString (Sort id args _) =
             return $ id ++ " of " ++ intercalate " * " args'
 
 
--- add(x, y) === add x y
+-- add(x, y) === add x y                function
+-- cons(z, nil) == cons (z, nil)        constructor
 termToString :: Term -> Builder String
-termToString (Term id terms) =
+termToString (Term id terms) = do
+    cs <- ask
     case terms of
         Nothing -> return id
-        (Just ts)  -> do
-            ts' <- mapM termToString ts
-            let p x = if ' ' `elem` x then "("++x++")" else x
-            let ts'' = intercalate " " $ map p ts'
-            return $  id ++ " " ++ ts''
+        (Just ts) -> 
+            if id `elem` cs then do
+                ts' <- mapM termToString ts
+                let ts'' = "(" ++ intercalate ", " ts' ++ ")"
+                return $  id ++ " " ++ ts''
+            else do
+                ts' <- mapM termToString ts
+                let p x = if ' ' `elem` x then "("++x++")" else x
+                let ts'' = intercalate " " $ map p ts'
+                return $  id ++ " " ++ ts''
 
 -- add(x, y) -> <z> === val z = add x y
 -- add(s(x), y) -> <s(z)> === val s z = add (s x) y
