@@ -27,7 +27,7 @@ data Task =
 
 -- The reader part (environment) is a list of all constructor ids such
 -- as cons, succ, nil and so on.
-type Builder = RWS [Id] () ()
+type Builder = RWS [Id] () String
 
 
 -- Returns the tasks to be translated and a list of all ids for constructors
@@ -76,7 +76,7 @@ ccsToTasks (Ccs _ sigs sorts rules) =
 translate :: CCS -> String
 translate ccs =
     let (tasks, cs) = ccsToTasks ccs
-        (a,_) = evalRWS (tasksToString tasks) cs ()
+        (a,_) = evalRWS (tasksToString tasks) cs "fun  "
     in a
 
 
@@ -95,12 +95,11 @@ taskToString task =
             constr <- mapM sortToString sorts
             return $ header ++ intercalate "\n\t|" constr
         Function id rules -> do
-            let header = "fun "
+            header <- get
             pats <- mapM ruleToString rules
-            -- let (pats, ends) = unzip out
-            -- let end = last ends
             let pats' = intercalate "\n\t|" pats
-            return $ "fun " ++ pats'
+            put "and  "
+            return $ header ++ pats'
             
 
 

@@ -1,0 +1,25 @@
+(VAR n source helper target n1 source1 target1 helper1 source2 helper2 target2 nOut helperOut sourceOut targetOut sources)
+(SIG
+    (hanoi 4 4)
+    (sourcetotarget 3 3)
+)
+(SORT
+    (z                  -> unum)
+    (s                  unum -> unum)
+    (nill               -> list)
+    (cons               unum list -> list)
+    (hanoi              unum list list list -> unum list list list)
+    (sourcetotarget     list list list -> list list list)
+)
+(RULES 
+  	hanoi(z,source,helper,target) -> <z,source,helper,target>
+	hanoi(s(n),source,helper,target) -> <s(nOut),sourceOut,helperOut,targetOut> <=
+		hanoi(n,source,target,helper) -> <n1,source1,target1,helper1> ^
+		sourcetotarget(source1,helper1,target1) -> <source2,helper2,target2> ^
+		hanoi(n,helper2,source2,target2) -> <nOut,helperOut,sourceOut,targetOut>
+
+	sourcetotarget(nill,helper,target) -> <nill,helper,target>
+	sourcetotarget(cons(source,sources),helper,target) -> <sources,helper,cons(source,target)>
+
+
+)

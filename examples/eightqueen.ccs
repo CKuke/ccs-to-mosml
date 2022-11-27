@@ -1,0 +1,38 @@
+(VAR n x y z w n1 n2 n3 n4 n5 n6 n7 n8 q qs y1 ys xdist ydist head tail permList permTail item list first list1)
+(SIG)
+(SORT)
+(RULES 
+  eightqueen(n1,n2,n3,n4,n5,n6,n7,n8) -> tp0() |
+  	perm(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,nil)))))))), c(s(0),c(s(s(0)),c(s(s(s(0))),c(s(s(s(s(0)))), c(s(s(s(s(s(0))))),c(s(s(s(s(s(s(0)))))), c(s(s(s(s(s(s(s(0))))))),c(s(s(s(s(s(s(s(s(0)))))))), nil))))))))) == tp0(),
+  	safe(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,nil))))))))) == tp0()
+  		
+ 
+  perm(nil,nil) -> tp0()
+ 
+  perm(c(head,tail),permList) -> tp0() | del(head,permList) == tp1(permTail), perm(tail,permTail) == tp0()
+ 
+  del(item,c(item,list)) -> tp1(list)
+  del(item,c(first,list)) -> tp1(c(first,list1)) | del(item,list) == tp1(list1)
+ 
+  	
+  
+
+  safe(nil) -> tp0()
+  safe(c(q,qs)) -> tp0() | safe(qs) == tp0(), noattack(q,qs,s(0)) == tp0()
+	
+  noattack(y,nil,x) -> tp0()
+  noattack(y,c(y1,ys),xdist) -> tp0() | 
+  	diff(y,y1) == tp1(ydist),
+  	neq(ydist,xdist) == tp0(),
+  	noattack(y,ys,s(xdist)) == tp0() 
+  
+  diff(s(x),s(y)) -> tp1(z) | diff(x,y) == tp1(z)
+  diff(0,s(y)) -> tp1(s(y))
+  diff(s(x),0) -> tp1(s(x))
+
+  neq(s(x),s(y)) -> tp0() | neq(x,y) == tp0()
+  neq(0,s(y)) -> tp0()
+  neq(s(x),0) -> tp0()
+  
+    
+)
