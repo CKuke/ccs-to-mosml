@@ -115,7 +115,7 @@ sortToString (Sort id args _) =
 -- cons(z, nil) == cons (z, nil)        constructor
 termToString :: Term -> Builder String
 termToString (Term id terms) = do
-    cs <- ask
+    cs <- ask -- get constructor ids
     case terms of
         Nothing -> return id
         (Just ts) -> 
