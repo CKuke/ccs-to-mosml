@@ -1,38 +1,74 @@
-(VAR n x y z w n1 n2 n3 n4 n5 n6 n7 n8 q qs y1 ys xdist ydist head tail permList permTail item list first list1)
-(SIG)
-(SORT)
+(VAR 
+  n x y z w 
+  n1 n2 n3 n4 n5 n6 n7 n8 
+  q qs y1 ys 
+  xdist ydist head tail permList permTail item list first list1
+)
+(SIG
+  (eightqueen 8 1)
+  (perm 2 1)
+  (del 2 1)
+  (safe 1 1)
+  (noattack 3 1)
+  (diff 2 1)
+  (neq 2 1)
+)
+(SORT
+    (ze                 -> unum)
+    (s                  unum -> unum)
+    (null               -> List)
+    (c                  unum List -> List)
+    (empty              -> empty)
+    (eightqueen         unum unum unum unum unum unum unum unum -> empty)
+    (perm               List List -> empty)
+    (del                unum List -> List)
+    (safe               List -> empty)
+    (noattack           unum List List -> empty)
+    (diff               unum unum -> empty)
+    (neq                unum unum -> empty)
+
+)
 (RULES 
-  eightqueen(n1,n2,n3,n4,n5,n6,n7,n8) -> tp0() |
-  	perm(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,nil)))))))), c(s(0),c(s(s(0)),c(s(s(s(0))),c(s(s(s(s(0)))), c(s(s(s(s(s(0))))),c(s(s(s(s(s(s(0)))))), c(s(s(s(s(s(s(s(0))))))),c(s(s(s(s(s(s(s(s(0)))))))), nil))))))))) == tp0(),
-  	safe(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,nil))))))))) == tp0()
+  eightqueen(n1,n2,n3,n4,n5,n6,n7,n8) -> <empty> <=
+  	perm(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,null)))))))), c(s(ze),c(s(s(ze)),c(s(s(s(ze))),c(s(s(s(s(ze)))), c(s(s(s(s(s(ze))))),c(s(s(s(s(s(s(ze)))))), c(s(s(s(s(s(s(s(ze))))))),c(s(s(s(s(s(s(s(s(ze)))))))), null))))))))) -> <empty> ^
+  	safe(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,null))))))))) -> <empty>
   		
+  perm(null,null) -> <empty>
+  perm(c(head,tail),permList) -> <empty> <=
+    del(head,permList) -> <permTail> ^ 
+    perm(tail,permTail) -> <empty>
  
-  perm(nil,nil) -> tp0()
+  del(item,c(item,list)) -> <list>
+  del(item,c(first,list)) -> <c(first,list1)> <=
+    del(item,list) -> <list1>
  
-  perm(c(head,tail),permList) -> tp0() | del(head,permList) == tp1(permTail), perm(tail,permTail) == tp0()
- 
-  del(item,c(item,list)) -> tp1(list)
-  del(item,c(first,list)) -> tp1(c(first,list1)) | del(item,list) == tp1(list1)
- 
-  	
-  
-
-  safe(nil) -> tp0()
-  safe(c(q,qs)) -> tp0() | safe(qs) == tp0(), noattack(q,qs,s(0)) == tp0()
+  safe(null) -> <empty>
+  safe(c(q,qs)) -> <empty> <=
+    safe(qs) -> <empty> ^ 
+    noattack(q,qs,s(ze)) -> <empty>
 	
-  noattack(y,nil,x) -> tp0()
-  noattack(y,c(y1,ys),xdist) -> tp0() | 
-  	diff(y,y1) == tp1(ydist),
-  	neq(ydist,xdist) == tp0(),
-  	noattack(y,ys,s(xdist)) == tp0() 
+  noattack(y,null,x) -> <empty>
+  noattack(y,c(y1,ys),xdist) -> <empty> <= 
+  	diff(y,y1) -> <ydist>  ^
+  	neq(ydist,xdist) -> <empty> ^
+  	noattack(y,ys,s(xdist)) -> <empty> 
   
-  diff(s(x),s(y)) -> tp1(z) | diff(x,y) == tp1(z)
-  diff(0,s(y)) -> tp1(s(y))
-  diff(s(x),0) -> tp1(s(x))
+  diff(s(x),s(y)) -> <z> <=
+    diff(x,y) -> <z>
+  diff(ze,s(y)) -> <s(y)>
+  diff(s(x),ze) -> <s(x)>
 
-  neq(s(x),s(y)) -> tp0() | neq(x,y) == tp0()
-  neq(0,s(y)) -> tp0()
-  neq(s(x),0) -> tp0()
+  neq(s(x),s(y)) -> <empty> <= neq(x,y) -> <empty>
+  neq(ze,s(y)) -> <empty>
+  neq(s(x),ze) -> <empty>
   
     
+)
+(COMMENT
+
+    safe(c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
+
+    perm (c(s(s(s(s(s(s(s(ze))))))), c(s(ze), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))  (c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
+
+    eightqueen (s(ze)) (s(s(s(s(s(s(s(ze)))))))) (s(s(s(s(s(ze)))))) (s(s(s(s(s(s(s(s(ze))))))))) (s(s(ze))) (s(s(s(s(ze))))) (s(s(s(s(s(s(ze))))))) (s(s(s(ze))))
 )

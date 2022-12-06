@@ -161,7 +161,7 @@ ruleToString (Rule t1 ts conds) =
                 Nothing -> return ""
                 Just conds' ->
                     do ss <- mapM condTostring conds'
-                       return $ "let " ++ intercalate "; " ss ++ " in "
+                       return $ "let " ++ intercalate "\n\t " ss ++ " in "
        let end = if null stmts then "" else " end"
        return $ pat ++ " = " ++ stmts ++ ret ++ end
        

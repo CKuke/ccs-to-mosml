@@ -1,13 +1,13 @@
-(VAR x y z)
+(VAR x y q)
 (SIG (add 2 1))
 (SORT
-    (zero   -> Nat)
+    (z      -> Nat)
     (succ   Nat -> Nat)
     (add    Nat Nat -> Nat)
 )
 (RULES
     add(zero, y) -> <y>
-    add(succ(x), y) -> <succ(z)> <= add(x,y) -> <z>
+    add(succ(x), y) -> <succ(q)> <= add(x,y) -> <q>
 )
 (COMMENT
     author:      [1]

@@ -37,7 +37,7 @@ dupVars (Ccs vars _ _ _) =
     let varIds = map (\(Var id) -> id) vars
         uniques = getDups varIds
         msgs = map (\x -> "warning dup VAR: " ++ x ++ "\n") uniques
-    in do 
+    in do
         tell msgs
         return ()
 
@@ -64,7 +64,7 @@ dupSorts (Ccs _ _ sorts _) =
         else do
             tell msgs
             put True
-            return () 
+            return ()
 
 -- checks if any of the defined vars is also defined as either a sort or sig
 overlap :: CCS -> Validator
@@ -91,21 +91,50 @@ overlap (Ccs vars sigs sorts _) =
             return ()
 
 -- check that all rules are defined in SIG and SORT
--- Type check the rules
+rules :: CCS -> Validator
+rules (Ccs _ sigs sorts rules) =
+    let sigIds  = map (\(Sig id _ _) -> id) sigs
+        sortIds = map (\(Sort id _ _) -> id) sorts
+        ruleIds = map (\(Rule (Term id _) _ _) -> id) rules
+
+        noSigs  = filter (`notElem` sigIds) ruleIds
+        noSorts = filter (`notElem` sortIds) ruleIds
+
+        msgs1 = map (\x -> "error RULE: " ++ x ++ "has no SIG") noSigs
+        msgs2 = map (\x -> "error RULE: " ++ x ++ "has no SORT") noSorts
+        msgs = msgs1 ++ msgs2
+
+    in if null msgs then return ()
+       else do
+            tell msgs
+            put True
+            return ()
+
 -- Is all variables in RULES defined in VAR
+-- checkVars :: CCS -> Validator
+-- checkVars (Ccs vars _ _ rules) =
+--     let varIds = (\(Var id) -> id)
+        
+-- Find all terms in rules which are not applied to anything
+-- sort out those which are constructors
+-- check if the remaining are defined in VAR
+
+
 -- Is all non-variable terms in RULES defined in SIG and/or SORT
+
+-- Type check the rules
 
 
 -- Utility function to get all duplicate ids from a list of ids
 getDups :: [Id] -> [Id]
 getDups src =
     let fun src seen res =
-            case src of 
+            case src of
                 [] -> res
                 (id:ids) ->
-                    if id `elem` seen && id `notElem` res then 
+                    if id `elem` seen && id `notElem` res then
                         fun ids seen (id : res)
-                    else if id `notElem` seen then 
+                    else if id `notElem` seen then
                         fun ids (id : seen) res
                     else
                         fun ids seen res
