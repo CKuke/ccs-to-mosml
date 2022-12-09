@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+-- {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant bracket" #-}
 {-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 module Main where
@@ -9,11 +9,13 @@ import Test.Tasty.HUnit
 import Text.Parsec
 import Text.Parsec.Error
 import Control.Monad.Trans.RWS.Lazy
+import Control.Monad.Reader
 
 import CCSAst
 import CCSParser
 import CCSValidate
 import CCSMosml 
+import CCSTypecheck 
 
 parserTest = testGroup "Parser tests"
     [
@@ -129,22 +131,22 @@ parserTest = testGroup "Parser tests"
         [
             testCase "add" $ do
                 tmp <- (parseProgram <$> readFile "examples/add.ccs")
-                let var = [Var "x", Var "y", Var "z"]
+                let var = [Var "x", Var "y", Var "q"]
                     sig = [Sig "add" 2 1]
                     sort = [
-                        Sort "zero" Nothing ["Nat"],
+                        Sort "z" Nothing ["Nat"],
                         Sort "succ" (Just ["Nat"]) ["Nat"],
                         Sort "add" (Just ["Nat", "Nat"]) ["Nat"]
                         ]
                     rules = [
                         Rule
-                            (Term "add" (Just [Term "zero" Nothing, Term "y" Nothing]))
+                            (Term "add" (Just [Term "z" Nothing, Term "y" Nothing]))
                             ([Term "y" Nothing])
                             Nothing
                         ,Rule
                             (Term "add" (Just [Term "succ"(Just [Term "x" Nothing]), Term "y" Nothing]))
-                            ([Term "succ" (Just [Term "z" Nothing])])
-                            (Just [Cond (Term "add" (Just [Term "x" Nothing, Term "y" Nothing])) [Term "z" Nothing]])
+                            ([Term "succ" (Just [Term "q" Nothing])])
+                            (Just [Cond (Term "add" (Just [Term "x" Nothing, Term "y" Nothing])) [Term "q" Nothing]])
                         ]
                     in tmp @?= Right (Ccs var sig sort rules)
         ]
@@ -290,7 +292,51 @@ validateTests = testGroup "Validation tests"
             --     in case res of
             --         Nothing -> assertFailure ""
             --         Just _ -> return ()
+        ],
+        testGroup "Type checking"
+        [
+            testCase "Term 1" $
+                let sorts = [Sort "z" Nothing ["unum"]]
+                    term = Term "z" Nothing
+                    res = runReader (typecheckTerm "unum" term) sorts
+                in case res of
+                    (Left _) -> assertFailure $ show res
+                    (Right []) -> return ()
+                    (Right _ ) -> assertFailure $ show res
+            ,
+            testCase "Term 2" $
+                let sorts = [Sort "z" Nothing ["unum"]]
+                    term = Term "z" Nothing
+                    res = runReader (typecheckTerm "List" term) sorts
+                in case res of
+                    (Left [m1]) -> return ()
+                    (Right _) -> assertFailure $ show res
+                    (Left _ ) -> assertFailure $ show res
+            ,
+            testCase "Sub terms 1" $
+                let term  = (Term "add" (Just [Term "x" Nothing, Term "y" Nothing]))
+                    sorts = [Sort "add" (Just ["unum", "unum"]) ["unum"]]
+                    exp = [Sort "x" Nothing ["unum"],Sort "y" Nothing ["unum"]]
+                    res = runReader (typecheckTerm "unum" term) sorts
+                in case res of
+                    (Left _) -> assertFailure $ show res
+                    (Right ss) -> ss @?= exp
+            ,
+            testCase "Conditions 1" $
+                let conds = [
+                        Cond (Term "add" (Just [Term "z" Nothing, Term "y" Nothing])) 
+                             [Term "y" Nothing]
+                        ]
+                    sorts = [
+                        Sort "z" Nothing ["unum"],
+                        Sort "add" (Just ["unum", "unum"]) ["unum"]
+                        ]
+                    res = runReader (typecheckConds conds) sorts
+                in case res of
+                    (Left _) -> assertFailure $ show res
+                    (Right ss) -> ss @?= [Sort "y" Nothing ["unum"]]
         ]
+
     ]
 
 mosmlTests = testGroup "MosML Tests" 
@@ -454,7 +500,7 @@ mosmlTests = testGroup "MosML Tests"
                 in a @?= exp
             ,
             testCase "Rule to string 6" $
-                let exp = "add (s x) y = let val s a = add x y; val it = a in s z end"
+                let exp = "add (s x) y = let val s a = add x y\n\t val it = a in s z end"
                     rule = Rule
                             (Term "add" (Just [Term "s" (Just [Term "x" Nothing]), Term "y" Nothing]))
                             [Term "s" (Just [Term "z" Nothing])]

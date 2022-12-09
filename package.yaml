@@ -7,6 +7,7 @@ dependencies:
 - tasty
 - tasty-hunit
 - transformers
+- mtl
 
 library:
   source-dirs:          lib
@@ -15,6 +16,7 @@ library:
     - CCSParser
     - CCSValidate
     - CCSMosml
+    - CCSTypecheck
 
 executable:
     main:                Main.hs

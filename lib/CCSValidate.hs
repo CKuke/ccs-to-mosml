@@ -10,6 +10,8 @@ import Data.List
 import Control.Monad.Trans.RWS.Lazy
 
 import CCSAst
+import Control.Monad
+import Data.Maybe
 
 
 {-
@@ -20,109 +22,184 @@ as functions get the correct number of arguments and so on.
 -}
 
 
+
+-- When validating we can encounter either errors or warnings. 
+-- It is possible to continue from errors 
+data ValidationMsg =
+      Error String
+    | Warning String
+    deriving(Eq, Read, Show)
+
 {-
 Monad with state bool and writeable state of type String.
 The bool will be used to indicate whether an error has been encountered.
 A warning will not set it to true.
 -}
-type Validator = RWS () [String] Bool ()
+type Validator = RWS () [ValidationMsg] Bool ()
 
--- validate :: CCS -> Bool
--- validate ccs =
---     let (res, _) = evalRWS 
+
+
+validate :: CCS -> Bool
+validate ccs =
+    let (res, out) = execRWS (validate' ccs) () False
+        _ = map print out
+    in res
+
+validate' :: CCS -> Validator
+validate' ccs = do
+    dupVars ccs
+    dupSigs ccs
+    dupSorts ccs
+    overlap ccs
+    s1 <- get
+    unless s1 $ do
+        rules ccs
+        checkVars ccs
+        checkNonVars ccs
+        checkArities ccs
+        -- s2 <- get
+        -- unless s2 $ do
+        --     typecheck ccs
 
 
 dupVars :: CCS -> Validator
-dupVars (Ccs vars _ _ _) =
+dupVars (Ccs vars _ _ _) = do
     let varIds = map (\(Var id) -> id) vars
-        uniques = getDups varIds
-        msgs = map (\x -> "warning dup VAR: " ++ x ++ "\n") uniques
-    in do
-        tell msgs
-        return ()
+    let uniques = getDups varIds
+    let msgs = map (\x -> Warning $ "dup VAR: " ++ x ++ "\n") uniques
+    tell msgs
 
 dupSigs :: CCS -> Validator
-dupSigs (Ccs _ sigs _ _) =
+dupSigs (Ccs _ sigs _ _) = do
     let sigIds = map (\(Sig id _ _) -> id) sigs
-        uniques = getDups sigIds
-        msgs = map (\x -> "error dup SIG: " ++ x) uniques
-    in
-        if null msgs then
-            return ()
-        else do
-            tell msgs
-            put True
-            return ()
+    let uniques = getDups sigIds
+    let msgs = map (\x -> Error $ "dup SIG: " ++ x) uniques
+    tell msgs
+    unless (null msgs) (put True)
 
 dupSorts :: CCS -> Validator
-dupSorts (Ccs _ _ sorts _) =
+dupSorts (Ccs _ _ sorts _) = do
     let sortIds = map (\(Sort id _ _) -> id) sorts
-        uniques = getDups sortIds
-        msgs = map (\x -> "error dup SORT: " ++ x) uniques
-    in
-        if null msgs then return ()
-        else do
-            tell msgs
-            put True
-            return ()
+    let uniques = getDups sortIds
+    let msgs = map (\x -> Error $ "dup SORT: " ++ x) uniques
+    tell msgs
+    unless (null msgs) (put True)
 
 -- checks if any of the defined vars is also defined as either a sort or sig
 overlap :: CCS -> Validator
-overlap (Ccs vars sigs sorts _) =
+overlap (Ccs vars sigs sorts _) = do
     let varIds = map (\(Var id) -> id) vars
-        sigIds = map (\(Sig id _ _) -> id) sigs
-        sortIds = map (\(Sort id _ _) -> id) sorts
+    let sigIds = map (\(Sig id _ _) -> id) sigs
+    let sortIds = map (\(Sort id _ _) -> id) sorts
 
-        varIds' = nub varIds
-        sigIds' = nub sigIds
-        sortIds' = nub sortIds
+    let varIds' = nub varIds
+    let sigIds' = nub sigIds
+    let sortIds' = nub sortIds
 
-        varSig = varIds' `intersect` sigIds'
-        varSort = varIds' `intersect` sortIds'
+    let varSig = varIds' `intersect` sigIds'
+    let varSort = varIds' `intersect` sortIds'
 
-        msgs1 = map (\x -> "error VAR " ++ x ++ " also defined in SIG") varSig
-        msgs2 = map (\x -> "error VAR " ++ x ++ " also defined in Sort") varSort
-        msgs = msgs1 ++ msgs2
+    let msgs1 = map (\x -> Error $ "VAR " ++ x ++ " also defined in SIG") varSig
+    let msgs2 = map (\x -> Error $ "VAR " ++ x ++ " also defined in Sort") varSort
+    let msgs = msgs1 ++ msgs2
+    tell msgs
+    unless (null msgs) (put True)
 
-    in if null msgs then return ()
-       else do
-            tell msgs
-            put True
-            return ()
 
 -- check that all rules are defined in SIG and SORT
 rules :: CCS -> Validator
-rules (Ccs _ sigs sorts rules) =
+rules (Ccs _ sigs sorts rules) = do
     let sigIds  = map (\(Sig id _ _) -> id) sigs
-        sortIds = map (\(Sort id _ _) -> id) sorts
-        ruleIds = map (\(Rule (Term id _) _ _) -> id) rules
+    let sortIds = map (\(Sort id _ _) -> id) sorts
+    let ruleIds = map (\(Rule (Term id _) _ _) -> id) rules
 
-        noSigs  = filter (`notElem` sigIds) ruleIds
-        noSorts = filter (`notElem` sortIds) ruleIds
+    let noSigs  = filter (`notElem` sigIds) ruleIds
+    let noSorts = filter (`notElem` sortIds) ruleIds
 
-        msgs1 = map (\x -> "error RULE: " ++ x ++ "has no SIG") noSigs
-        msgs2 = map (\x -> "error RULE: " ++ x ++ "has no SORT") noSorts
-        msgs = msgs1 ++ msgs2
+    let msgs1 = map (\x -> Error $ "RULE: " ++ x ++ "has no SIG") noSigs
+    let msgs2 = map (\x -> Error $ "RULE: " ++ x ++ "has no SORT") noSorts
+    let msgs = msgs1 ++ msgs2
 
-    in if null msgs then return ()
-       else do
-            tell msgs
-            put True
-            return ()
+    tell msgs
+    unless (null msgs) (put True)
+
 
 -- Is all variables in RULES defined in VAR
--- checkVars :: CCS -> Validator
--- checkVars (Ccs vars _ _ rules) =
---     let varIds = (\(Var id) -> id)
-        
--- Find all terms in rules which are not applied to anything
--- sort out those which are constructors
--- check if the remaining are defined in VAR
+checkVars :: CCS -> Validator
+checkVars (Ccs vars _ _ rules) = do
+    let varIds = map (\(Var id) -> id) vars
+    let getIdsT (Term id ts) =
+            case ts of
+                Nothing -> [id]
+                Just ts' -> concatMap getIdsT ts'
+    let getIdsR (Rule t1 ts cs) =
+            let id1 = getIdsT t1
+                ids = concatMap getIdsT ts
+                idsc = case cs of
+                        Nothing -> []
+                        Just cs' ->
+                            concatMap (\(Cond t ts') -> getIdsT t ++ (concatMap getIdsT ts')) cs'
+            in id1 ++ ids ++ idsc
+    let usedIds = concatMap getIdsR rules
+    let missing = filter (`notElem` varIds) usedIds
+    let msgs = map (\x-> Error $ "RULE: var " ++ x ++ " not defined in VAR") missing
+    tell msgs
+    unless (null msgs) (put True)
+
+-- Is all non-var terms in rules defined in sig and/or sort
+checkNonVars :: CCS -> Validator
+checkNonVars (Ccs _ sigs sorts rules) = do
+    let sigIds = map (\(Sig id _ _) -> id) sigs
+    let sortIds = map (\(Sort id _ _) -> id) sorts
+    let getIdsT (Term id ts) =
+            case ts of
+                Nothing -> []
+                Just ts' -> concatMap getIdsT ts'
+    let getIdsR (Rule t1 ts cs) =
+            let ids1 = getIdsT t1
+                ids2 = concatMap getIdsT ts
+                idsc = case cs of
+                    Nothing -> []
+                    Just cs' ->
+                        concatMap (\(Cond t ts') -> getIdsT t ++ (concatMap getIdsT ts')) cs'
+            in ids1 ++ ids2 ++ idsc
+    let usedIds = concatMap getIdsR rules
+    let missing = filter (`notElem` (sigIds++sortIds)) usedIds
+    let msgs = map (\x -> Error $ "RULE: term " ++ x ++ " not defined in SIG and/or SORT") missing
+    tell msgs
+    unless (null msgs) (put True)
 
 
--- Is all non-variable terms in RULES defined in SIG and/or SORT
+checkArities :: CCS -> Validator
+checkArities (Ccs _ sigs sorts rules) =
+    let msgs = map (checkArityRule sigs sorts) rules
+    in unless (null msgs) (put True)
 
--- Type check the rules
+
+checkArityRule :: [Sig] -> [Sort] -> Rule -> Validator
+checkArityRule sigs sorts (Rule (Term id ts) ts2 cs) = do
+    let arity = maybe 0 length ts
+    let coarity = length ts2
+    -- At this point it should have been validated that all rules has 
+    -- one and only one sig and sort
+    let [sig] = filter (\(Sig sid _ _) -> sid == id) sigs
+    let [sort] = filter (\(Sort sid _ _) -> sid == id) sorts
+
+    let sortArity   = let (Sort _ ids _) = sort in maybe 0 length ids
+    let sortCoarity = let (Sort _ _ ids) = sort in length ids
+
+    let msgs =
+            let (Sig _ a c) = sig
+                msg1 = ([Error $ "RULE " ++ id ++ " with arity " ++ show arity ++ " used on " ++ show a ++ "arguments" | a /= arity])
+                msg2 = ([Error $ "RULE " ++ id ++ " with coarity " ++ show coarity ++ " returns " ++ show c ++ " values" | c /= coarity])
+                msg3 = ([Error $ "RULE " ++ id ++ " has differing arity in SIG and SORT with " ++ show arity ++" and " ++ show sortArity | arity /= sortArity])
+                msg4 = ([Error $ "RULE " ++ id ++ " has differing coarity in SIG and SORT with " ++ show coarity ++" and " ++ show sortCoarity | coarity /= sortCoarity])
+            in msg1 ++ msg2 ++ msg3 ++ msg4
+    tell msgs
+    unless (null msgs) (put True)
+
+
+
 
 
 -- Utility function to get all duplicate ids from a list of ids
@@ -139,4 +216,10 @@ getDups src =
                     else
                         fun ids seen res
     in fun src [] []
+
+
+
+
+
+
 
