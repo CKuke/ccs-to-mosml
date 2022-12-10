@@ -23,8 +23,8 @@
     (perm               List List -> empty)
     (del                unum List -> List)
     (safe               List -> empty)
-    (noattack           unum List List -> empty)
-    (diff               unum unum -> empty)
+    (noattack           unum List unum -> empty)
+    (diff               unum unum -> unum)
     (neq                unum unum -> empty)
 
 )
@@ -66,7 +66,7 @@
 )
 (COMMENT
 
-    safe(c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
+    safe (c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
 
     perm (c(s(s(s(s(s(s(s(ze))))))), c(s(ze), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))  (c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
 

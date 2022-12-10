@@ -315,7 +315,7 @@ validateTests = testGroup "Validation tests"
             testCase "Term 1" $
                 let sorts = [Sort "z" Nothing ["unum"]]
                     term = Term "z" Nothing
-                    res = runTypechecker (typecheckTerm (head sorts) term) sorts
+                    res = runTypechecker (typecheckTerm "unum" term) sorts
                 in case res of
                     (Left _) -> assertFailure $ show res
                     (Right []) -> return ()
@@ -324,7 +324,7 @@ validateTests = testGroup "Validation tests"
             testCase "Term 2" $
                 let sorts = [Sort "z" Nothing ["unum"]]
                     term = Term "z" Nothing
-                    res = runTypechecker (typecheckTerm (Sort "z" Nothing ["List"]) term) sorts
+                    res = runTypechecker (typecheckTerm "list" term) sorts
                 in case res of
                     (Left m1) -> return ()
                     (Right _) -> assertFailure $ show res
@@ -341,7 +341,7 @@ validateTests = testGroup "Validation tests"
                 let term  = (Term "add" (Just [Term "x" Nothing, Term "y" Nothing]))
                     sort = Sort "add" (Just ["unum", "unum"]) ["unum"]
                     exp = [Sort "x" Nothing ["unum"],Sort "y" Nothing ["unum"]]
-                    res = runTypechecker (typecheckTerm sort term) [sort]
+                    res = runTypechecker (typecheckTerm "unum" term) [sort]
                 in case res of
                     (Left _) -> assertFailure $ show res
                     (Right ss) -> ss @?= exp
