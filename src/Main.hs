@@ -29,9 +29,18 @@ main = do
                 case parseProgram ccsString of
                     Left err -> putStrLn err
                     Right ccs -> do
+                        case validate ccs of
+                            Just msgs -> putStrLn $ intercalate "\n" msgs
+                            Nothing ->
+                                case typecheck ccs of
+                                    Just msgs -> putStrLn $ intercalate "\n" msgs
+                                    Nothing ->
+                                        let mosml = translate ccs in 
+                                        writeFile out mosml
+
                         -- TODO: add some validation here
-                        when (validate ccs) $ do
-                            when (typecheck ccs) $ do
-                                    let mosml = translate ccs
-                                    writeFile out mosml
+                        -- when (validate ccs) $ do
+                        --     when (typecheck ccs) $ do
+                        --             let mosml = translate ccs
+                        --             writeFile out mosml
         _ -> do putStrLn("Command: " ++ command ++ " does not exist")

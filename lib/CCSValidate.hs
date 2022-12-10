@@ -38,12 +38,14 @@ A warning will not set it to true.
 type Validator = RWS () [ValidationMsg] Bool ()
 
 
-
-validate :: CCS -> Bool
+-- will maybe return error messages
+validate :: CCS -> Maybe [String]
 validate ccs =
-    let (res, out) = execRWS (validate' ccs) () False
-        _ = map print out
-    in res
+    let (_, out) = execRWS (validate' ccs) () False
+    in case out of
+      [] -> Nothing
+      msgs -> Just $ map show msgs
+
 
 validate' :: CCS -> Validator
 validate' ccs = do
@@ -126,11 +128,14 @@ rules (Ccs _ sigs sorts rules) = do
 
 -- Is all variables in RULES defined in VAR
 checkVars :: CCS -> Validator
-checkVars (Ccs vars _ _ rules) = do
+checkVars (Ccs vars _ sorts rules) = do
     let varIds = map (\(Var id) -> id) vars
     let getIdsT (Term id ts) =
             case ts of
-                Nothing -> [id]
+                Nothing ->
+                    -- only return the id if does not have a sort as then
+                    -- it is a "constructor"
+                    ([id | not (any (\(Sort sid _ _)-> sid==id) sorts)])
                 Just ts' -> concatMap getIdsT ts'
     let getIdsR (Rule t1 ts cs) =
             let id1 = getIdsT t1

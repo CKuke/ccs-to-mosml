@@ -1,4 +1,4 @@
--- {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant bracket" #-}
 {-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 module Main where
@@ -295,10 +295,27 @@ validateTests = testGroup "Validation tests"
         ],
         testGroup "Type checking"
         [
+            testCase "Lookup env 1" $
+                let sorts = [Sort "z" Nothing ["unum"]]
+                    res = runTypechecker (lookupEnv "z") sorts
+                in case res of
+                    (Left _) -> assertFailure $ show res
+                    (Right Nothing) -> assertFailure $ show res
+                    (Right (Just res')) ->
+                        res' @?= (head sorts)
+            ,
+            testCase "Lookup env 2" $
+                let sorts = [Sort "z" Nothing ["unum"]]
+                    res = runTypechecker (lookupEnv "s") sorts
+                in case res of
+                    (Left _) -> assertFailure $ show res
+                    (Right (Just res')) -> assertFailure $ show res
+                    (Right Nothing) -> return ()
+            ,
             testCase "Term 1" $
                 let sorts = [Sort "z" Nothing ["unum"]]
                     term = Term "z" Nothing
-                    res = runReader (typecheckTerm "unum" term) sorts
+                    res = runTypechecker (typecheckTerm (head sorts) term) sorts
                 in case res of
                     (Left _) -> assertFailure $ show res
                     (Right []) -> return ()
@@ -307,17 +324,24 @@ validateTests = testGroup "Validation tests"
             testCase "Term 2" $
                 let sorts = [Sort "z" Nothing ["unum"]]
                     term = Term "z" Nothing
-                    res = runReader (typecheckTerm "List" term) sorts
+                    res = runTypechecker (typecheckTerm (Sort "z" Nothing ["List"]) term) sorts
                 in case res of
-                    (Left [m1]) -> return ()
+                    (Left m1) -> return ()
                     (Right _) -> assertFailure $ show res
-                    (Left _ ) -> assertFailure $ show res
+            ,
+            testCase "Term' 1" $
+                let sorts = [Sort "z" Nothing ["unum"]]
+                    term = Term "z" Nothing
+                    res = runTypechecker (typecheckTerm' term) sorts
+                in case res of
+                    (Left _) -> assertFailure $ show res
+                    (Right s) -> return ()
             ,
             testCase "Sub terms 1" $
                 let term  = (Term "add" (Just [Term "x" Nothing, Term "y" Nothing]))
-                    sorts = [Sort "add" (Just ["unum", "unum"]) ["unum"]]
+                    sort = Sort "add" (Just ["unum", "unum"]) ["unum"]
                     exp = [Sort "x" Nothing ["unum"],Sort "y" Nothing ["unum"]]
-                    res = runReader (typecheckTerm "unum" term) sorts
+                    res = runTypechecker (typecheckTerm sort term) [sort]
                 in case res of
                     (Left _) -> assertFailure $ show res
                     (Right ss) -> ss @?= exp
@@ -331,7 +355,7 @@ validateTests = testGroup "Validation tests"
                         Sort "z" Nothing ["unum"],
                         Sort "add" (Just ["unum", "unum"]) ["unum"]
                         ]
-                    res = runReader (typecheckConds conds) sorts
+                    res = runTypechecker (typecheckConds conds) sorts
                 in case res of
                     (Left _) -> assertFailure $ show res
                     (Right ss) -> ss @?= [Sort "y" Nothing ["unum"]]
