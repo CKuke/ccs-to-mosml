@@ -1,0 +1,45 @@
+(CONDITIONTYPE ORIENTED)
+(VAR n source helper target n1 source1 target1 helper1 source2 helper2 target2 nOut helperOut sourceOut targetOut sources)
+(RULES 
+  	hanoi(0,source,helper,target) -> o(0,source,helper,target)
+	hanoi(s(n),source,helper,target) -> o(s(nOut),sourceOut,helperOut,targetOut) |
+		hanoi(n,source,target,helper) == o(n1,source1,target1,helper1),
+		sourcetotarget(source1,helper1,target1) == o(source2,helper2,target2),
+		hanoi(n,helper2,source2,target2) == o(nOut,helperOut,sourceOut,targetOut)
+
+	sourcetotarget(nil,helper,target) -> o(nil,helper,target)
+	sourcetotarget(cons(source,sources),helper,target) -> o(sources,helper,cons(source,target))
+
+
+)
+(COMMENT
+
+Author: Maja H. Kirkeby
+
+example of initial call: hanoi(s(s(s(s(0)))) ,cons(1,cons(2,cons(3,cons(4,nil)))),nil,nil)
+
+Inspired by:
+
+hanoi
+https://www.python-course.eu/towers_of_hanoi.php
+
+
+def hanoi(n, source, helper, target):
+    if n > 0:
+        # move tower of size n - 1 to helper:
+        hanoi(n - 1, source, target, helper)
+        # move disk from source peg to target peg
+        if source:
+            target.append(source.pop())
+        # move tower of size n-1 from helper to target
+        hanoi(n - 1, helper, source, target)
+        
+source = [4,3,2,1]
+target = []
+helper = []
+hanoi(len(source),source,helper,target)
+
+print(source, helper, target)
+
+
+)

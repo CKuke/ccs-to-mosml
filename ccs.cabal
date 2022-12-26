@@ -16,6 +16,7 @@ library
       CCSParser
       CCSValidate
       CCSMosml
+      CCSTypecheck
   other-modules:
       Paths_ccs
   hs-source-dirs:
@@ -23,6 +24,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , mtl
     , parsec
     , tasty
     , tasty-hunit
@@ -39,6 +41,7 @@ executable ccs
       base >=4.7 && <5
     , ccs
     , containers
+    , mtl
     , parsec
     , tasty
     , tasty-hunit
@@ -56,6 +59,7 @@ test-suite blackbox-test
       base >=4.7 && <5
     , ccs
     , containers
+    , mtl
     , parsec
     , tasty
     , tasty-hunit
