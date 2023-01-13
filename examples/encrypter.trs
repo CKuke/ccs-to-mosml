@@ -1,0 +1,13 @@
+(VAR key x xs z zs w0)
+(RULES
+    encrypt(nil, key) -> <nil>
+    encrypt(cons(x,xs), key) -> <cons(z,zs)> <=
+                                mod4(key) -> <y> ^
+                                add(x,y) -> <z>  ^
+                                encrypt(xs,key) -> <zs>
+    mod4(oo) -> <oo>
+    mod4(s(oo)) -> <s(oo)>
+    mod4(s(s(oo))) -> <s(s(oo))>
+    mod4(s(s(s(oo)))) -> <s(s(s(oo)))>
+    mod4(s(s(s(s(x))))) -> <w0> <= mod4(x) -> <w0>
+)

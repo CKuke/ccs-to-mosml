@@ -139,13 +139,13 @@ typecheckTerm expected (Term id Nothing) = do
         Nothing -> do -- Give the term a new sort
             let sort = Sort id Nothing [expected]
             return [sort]
-        Just (Sort _ Nothing [actual]) -> -- Check if sorts match
+        Just (Sort _ _ [actual]) -> -- Check if sorts match
             if actual == expected then return []
             else do 
                 abort $ id++" expected to have sort "++expected++" but found "++actual
-        Just (Sort _ _ _) -> 
+        Just s -> 
             -- This case only exists to satisfy the compiler
-            error "TypecheckTerm error 1"
+            error $ "TypecheckTerm error" ++ show s
 typecheckTerm expected (Term id (Just ts)) = do
     sortM <- lookupEnv id
     case sortM of
@@ -156,9 +156,9 @@ typecheckTerm expected (Term id (Just ts)) = do
                 abort $ id++" expected to have sort "++expected++" but found "++actual
             else do -- check all the subterms
                 typecheckTerms ins ts
-        Just (Sort _ _ _) -> 
+        Just s -> 
             -- This case only exists to satisfy the compiler
-            error "TypecheckTerm error 2"
+            error $ "TypecheckTerm error " ++ show s
                 
 
 

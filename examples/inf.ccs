@@ -1,0 +1,6 @@
+(VAR x y)
+(SIG (f 1 1))
+(SORT (f T -> T))
+(RULES
+    f(x) -> <y> <= f(x) -> <y>
+)

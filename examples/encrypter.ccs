@@ -1,0 +1,30 @@
+(VAR key x xs z zs w0 y)
+(SIG
+    (encrypt 2 1)
+    (mod4 1 1)
+    (add 2 1)
+)
+(SORT
+    (oo         -> unum)
+    (s          unum -> unum)
+    (null        -> list)
+    (cons       unum list -> list)
+    (encrypt    list unum -> list)
+    (mod4       unum -> unum)
+    (add        unum unum -> unum)
+)
+(RULES
+    encrypt(null, key) -> <null>
+    encrypt(cons(x,xs), key) -> <cons(z,zs)> <=
+                                mod4(key) -> <y> ^
+                                add(x,y) -> <z>  ^
+                                encrypt(xs,key) -> <zs>
+    mod4(oo) -> <oo>
+    mod4(s(oo)) -> <s(oo)>
+    mod4(s(s(oo))) -> <s(s(oo))>
+    mod4(s(s(s(oo)))) -> <s(s(s(oo)))>
+    mod4(s(s(s(s(x))))) -> <w0> <= mod4(x) -> <w0>
+
+    add(oo, y) -> <y>
+    add(s(x), y) -> <s(z)> <= add(x,y) -> <z>
+)

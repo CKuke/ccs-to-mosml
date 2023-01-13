@@ -1,0 +1,51 @@
+(VAR x y x1 y1 x2 y2 u v z1 z2 progr name)
+(SIG 
+    (inv 1 1)
+    (invName 1 1)
+)
+(SORT
+    (Name       string -> Name)
+    (invName    Name -> Name)
+    (inv        janus -> janus)
+    (proc       Name janus  -> janus)
+    (uadd       janus janus -> janus)
+    (usub       janus janus -> janus)
+    (swap       janus janus -> janus)
+    (ifT        janus janus janus janus -> janus)
+    (loop       janus janus janus janus -> janus)
+    (call       Name -> janus)
+    (uncall     Name -> janus)
+    (sequence   janus janus -> janus)
+    (skip       -> janus)
+)
+(RULES
+    inv(proc(name,progr)) -> <proc(name,v)> <= inv(progr) -> <v>
+
+    inv(uadd(x,y))  -> <usub(x,y)>
+    inv(usub(x,y))  -> <uadd(x,y)>
+    inv(swap(x,y)) -> <swap(x,y)>
+
+    inv(ifT(x1,y1,y2,x2)) -> <ifT(x2,z1,z2,x1)> <=
+                            inv(y1) -> <z1> ^
+                            inv(y2) -> <z2>
+    inv(loop(x1,y1,y2,x2)) -> <loop(x2,z1,z2,x1)> <=
+                              inv(y1) -> <z1> ^
+                              inv(y2) -> <z2>
+    
+    inv(call(name)) -> <call(name)>
+    inv(uncall(name)) -> <uncall(name)>
+
+    inv(sequence(x,y)) -> <sequence(u,v)> <=
+                          inv(y) -> <u> ^
+                          inv(x) -> <v>
+    inv(skip) -> <skip>
+
+    invName(name) -> <name>
+
+)
+(COMMENTS
+
+    inv (sequence(uadd(skip, skip), swap(skip, skip)))
+    inv (sequence(uadd(skip, skip), sequence(usub(skip,skip), swap(skip, skip))))
+
+)
