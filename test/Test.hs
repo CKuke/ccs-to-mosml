@@ -251,47 +251,6 @@ validateTests = testGroup "Validation tests"
                     case (s,w) of
                         (True, [_,_]) -> return ()
                         (_, tmp) -> assertFailure $ show tmp
-            -- testCase "dup var 1" $
-            --     let res = validateCCS (Ccs [Var "a", Var "a"] [] [] [])
-            --     in case res of
-            --         Nothing -> assertFailure ""
-            --         Just _ -> return ()
-            -- ,
-            -- testCase "dup var 2" $
-            --     let res = validateCCS (Ccs [Var "a", Var "a",Var "b", Var "b"] [] [] [])
-            --     in case res of
-            --         Nothing -> assertFailure ""
-            --         Just _ -> return ()                    
-            -- ,
-            -- testCase "dup sig 1" $
-            --     let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "a" 2 2] [] [])
-            --     in case res of
-            --         Nothing -> assertFailure ""
-            --         Just _ -> return ()        
-            -- ,
-            -- testCase "dup sig 2" $
-            --     let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "a" 2 2, Sig "b" 1 1, Sig "b" 2 2] [] [])
-            --     in case res of
-            --         Nothing -> assertFailure ""
-            --         Just _ -> return ()
-            -- ,
-            -- testCase "dup sig 3" $
-            --     let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "a" 2 2, Sig "c" 1 1, Sig "b" 2 2] [] [])
-            --     in case res of
-            --         Nothing -> assertFailure ""
-            --         Just _ -> return ()
-            -- ,
-            -- testCase "dup sig 4" $
-            --     let res = validateCCS (Ccs [] [Sig "a" 1 1, Sig "b" 1 1, Sig "c" 2 2] [] [])
-            --     in case res of
-            --         Nothing -> return ()
-            --         Just _ -> assertFailure ""
-            -- ,
-            -- testCase "undefined var" $
-            --     let res = validateCCS (Ccs [Var "a"] [] [] [Rule (Term "add" Nothing) [Term "b" Nothing] Nothing])
-            --     in case res of
-            --         Nothing -> assertFailure ""
-            --         Just _ -> return ()
         ],
         testGroup "Type checking"
         [
@@ -596,9 +555,6 @@ mosmlTests = testGroup "MosML Tests"
                             ]
                     (a,_) = evalRWS (tasksToString [dat, fun]) [] "fun  "
                 in a @?= exp
-            -- ,
-            -- testCase "multiple return" $
-
         ]
     ]
 

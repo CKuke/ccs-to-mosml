@@ -15,7 +15,7 @@ import Data.Maybe
 
 
 {-
-This module will contain functionality for validating a ccs. It will not test
+This module contains functionality for validating a ccs. It will not test
 for properties such as EV-Free, left-to-right deterministic and so on, but will
 make sure that terms defined as variables are only used as variables, terms applied
 as functions get the correct number of arguments and so on.
@@ -130,14 +130,20 @@ rules (Ccs _ sigs sorts rules) = do
 checkVars :: CCS -> Validator
 checkVars (Ccs vars _ sorts rules) = do
     let varIds = map (\(Var id) -> id) vars
-    let getIdsT (Term id ts) =
+    let usedIds = concatMap getIdsR rules
+    let missing = filter (`notElem` varIds) usedIds
+    let msgs = map (\x-> Error $ "RULE: var " ++ x ++ " not defined in VAR") missing
+    tell msgs
+    unless (null msgs) (put True)
+    where
+        getIdsT (Term id ts) =
             case ts of
                 Nothing ->
                     -- only return the id if does not have a sort as then
                     -- it is a "constructor"
                     ([id | not (any (\(Sort sid _ _)-> sid==id) sorts)])
                 Just ts' -> concatMap getIdsT ts'
-    let getIdsR (Rule t1 ts cs) =
+        getIdsR (Rule t1 ts cs) =
             let id1 = getIdsT t1
                 ids = concatMap getIdsT ts
                 idsc = case cs of
@@ -145,22 +151,23 @@ checkVars (Ccs vars _ sorts rules) = do
                         Just cs' ->
                             concatMap (\(Cond t ts') -> getIdsT t ++ (concatMap getIdsT ts')) cs'
             in id1 ++ ids ++ idsc
-    let usedIds = concatMap getIdsR rules
-    let missing = filter (`notElem` varIds) usedIds
-    let msgs = map (\x-> Error $ "RULE: var " ++ x ++ " not defined in VAR") missing
-    tell msgs
-    unless (null msgs) (put True)
 
 -- Is all non-var terms in rules defined in sig and/or sort
 checkNonVars :: CCS -> Validator
 checkNonVars (Ccs _ sigs sorts rules) = do
     let sigIds = map (\(Sig id _ _) -> id) sigs
     let sortIds = map (\(Sort id _ _) -> id) sorts
-    let getIdsT (Term id ts) =
+    let usedIds = concatMap getIdsR rules
+    let missing = filter (`notElem` (sigIds++sortIds)) usedIds
+    let msgs = map (\x -> Error $ "RULE: term " ++ x ++ " not defined in SIG and/or SORT") missing
+    tell msgs
+    unless (null msgs) (put True)
+    where
+        getIdsT (Term id ts) =
             case ts of
                 Nothing -> []
                 Just ts' -> concatMap getIdsT ts'
-    let getIdsR (Rule t1 ts cs) =
+        getIdsR (Rule t1 ts cs) =
             let ids1 = getIdsT t1
                 ids2 = concatMap getIdsT ts
                 idsc = case cs of
@@ -168,11 +175,7 @@ checkNonVars (Ccs _ sigs sorts rules) = do
                     Just cs' ->
                         concatMap (\(Cond t ts') -> getIdsT t ++ (concatMap getIdsT ts')) cs'
             in ids1 ++ ids2 ++ idsc
-    let usedIds = concatMap getIdsR rules
-    let missing = filter (`notElem` (sigIds++sortIds)) usedIds
-    let msgs = map (\x -> Error $ "RULE: term " ++ x ++ " not defined in SIG and/or SORT") missing
-    tell msgs
-    unless (null msgs) (put True)
+
 
 
 checkArities :: CCS -> Validator

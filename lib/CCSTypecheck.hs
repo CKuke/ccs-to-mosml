@@ -37,9 +37,11 @@ instance Applicative Typechecker where
 Utility functions
 -}
 
+-- Aborts by setting the internal state to Left
 abort :: String -> Typechecker a
 abort msg = Typechecker $ \_ -> Left msg
 
+-- Get the currently bound env
 ask :: Typechecker [Sort]
 ask = Typechecker $ \e -> Right e
 
@@ -47,6 +49,7 @@ ask = Typechecker $ \e -> Right e
 withEnv :: [Sort] -> Typechecker a -> Typechecker a
 withEnv env m = Typechecker $ \e -> runTypechecker m (env++e)
 
+-- Finds the sort of an id in the currently bound env
 lookupEnv :: Id -> Typechecker (Maybe Sort)
 lookupEnv id = do
     find (\(Sort sid _ _)->sid==id) <$> ask
@@ -54,7 +57,7 @@ lookupEnv id = do
 
 
 {-
-Main function
+Main entry point for typechecking a CCS
 -}
 typecheck :: CCS -> Maybe [String]
 typecheck (Ccs _ _ sorts rules) = do
@@ -94,9 +97,6 @@ typecheckCond (Cond t ts) = do
     (outs, env) <- typecheckTerm' t
     env' <- withEnv env $ typecheckTerms outs ts
     return $ env++env'
-    
-    -- subSorts <- createSorts sort ts
-    -- typecheckTerms subSorts ts
 
 
 
@@ -131,7 +131,10 @@ typecheckTerms ss [] = do if not (null ss) then abort "No" else return []
 
 
 
-
+-- Type checks a term. If the term has no subterms then but already has a sort in
+-- in the env then we check it and if not we give it he expected sort.
+-- If there are subterms and the term has a sort, then we can find the sort of
+-- the subterms should have a check these
 typecheckTerm :: Id -> Term -> Typechecker [Sort]
 typecheckTerm expected (Term id Nothing) = do
     sortM <- lookupEnv id 

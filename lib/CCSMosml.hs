@@ -63,7 +63,8 @@ ccsToTasks (Ccs _ sigs sorts rules) =
                 ([], _) -> []
                 (id:ids, rs) ->
                     let (rs', rs'') = partition (\(Rule (Term rid _) _ _) -> rid==id) rs
-                    in Function id rs' : toFunction ids rs''
+                    in if null rs' then toFunction ids rs''
+                       else Function id rs' : toFunction ids rs''
         funTasks = toFunction sigIds rules
     in 
         (dTypeTasks ++ funTasks, sortIds')
