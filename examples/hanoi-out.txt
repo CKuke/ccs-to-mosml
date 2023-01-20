@@ -1,5 +1,0 @@
-- hanoi (s(s(s(s z)))) (cons(z, cons(s z, cons(s(s z), cons(s(s(s z)), nill))))) nill nill;
-> val it =
-    (s(s(s(s z))), nill, nill,
-     cons(z, cons(s z, cons(s(s z), cons(s(s(s z)), nill))))) :
-  unum * List * List * List

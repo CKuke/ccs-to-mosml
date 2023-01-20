@@ -4,3 +4,6 @@
 (RULES
     f(x) -> <y> <= f(x) -> <y>
 )
+(COMMENT
+    Results in non terminating program when translated due to infinte recursion.
+)

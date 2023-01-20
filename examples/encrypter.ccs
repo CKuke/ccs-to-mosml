@@ -28,3 +28,9 @@
     add(oo, y) -> <y>
     add(s(x), y) -> <s(z)> <= add(x,y) -> <z>
 )
+(COMMENT
+
+    Modified from:
+        Semi-inversion of Conditional Constructor Term Rewriting Systems
+        By Maja H. Kirkeby and Robert Glück
+)

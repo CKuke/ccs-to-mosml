@@ -44,8 +44,13 @@
 
 )
 (COMMENTS
+    example input.
 
     inv (sequence(uadd(skip, skip), swap(skip, skip)))
     inv (sequence(uadd(skip, skip), sequence(usub(skip,skip), swap(skip, skip))))
+
+    Modified from:
+        Semi-inversion of Conditional Constructor Term Rewriting Systems
+        By Maja H. Kirkeby and Robert Glück
 
 )

@@ -4,22 +4,20 @@
     (sourcetotarget 3 3)
 )
 (SORT
-    (z                  -> unum)
+    (oo                 -> unum)
     (s                  unum -> unum)
-    (nill               -> List)
+    (ni                 -> List)
     (cons               unum List -> List)
     (hanoi              unum List List List -> unum List List List)
     (sourcetotarget     List List List -> List List List)
 )
 (RULES 
-  	hanoi(z,source,helper,target) -> <z,source,helper,target>
+  	hanoi(oo,source,helper,target) -> <oo,source,helper,target>
 	hanoi(s(n),source,helper,target) -> <s(nOut),sourceOut,helperOut,targetOut> <=
 		hanoi(n,source,target,helper) -> <n1,source1,target1,helper1> ^
 		sourcetotarget(source1,helper1,target1) -> <source2,helper2,target2> ^
 		hanoi(n,helper2,source2,target2) -> <nOut,helperOut,sourceOut,targetOut>
 
-	sourcetotarget(nill,helper,target) -> <nill,helper,target>
+	sourcetotarget(ni,helper,target) -> <ni,helper,target>
 	sourcetotarget(cons(source,sources),helper,target) -> <sources,helper,cons(source,target)>
-
-
 )

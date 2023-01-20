@@ -1,0 +1,20 @@
+(VAR x xs z)
+(SIG (count 1 1) )
+(SORT
+    (oo     -> unum)
+    (s      unum -> unum)
+    (none   -> list)
+    (cons   unum list -> list)
+    (count  list -> unum)
+)
+(RULES
+    count(cons(x, xs)) -> <s(z)> <=  count(xs) -> <z>
+)
+(COMMENT
+
+The last case for count is missing on purpose.
+When translated it will not work, but to show that
+the translator will translate it but the mosml REPL
+will give a warning on non-exhaustive pattern matching.
+
+)

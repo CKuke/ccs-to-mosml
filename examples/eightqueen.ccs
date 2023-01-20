@@ -14,9 +14,9 @@
   (neq 2 1)
 )
 (SORT
-    (ze                 -> unum)
+    (oo                 -> unum)
     (s                  unum -> unum)
-    (null               -> List)
+    (Nil               -> List)
     (c                  unum List -> List)
     (empty              -> empty)
     (eightqueen         unum unum unum unum unum unum unum unum -> empty)
@@ -30,10 +30,10 @@
 )
 (RULES 
   eightqueen(n1,n2,n3,n4,n5,n6,n7,n8) -> <empty> <=
-  	perm(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,null)))))))), c(s(ze),c(s(s(ze)),c(s(s(s(ze))),c(s(s(s(s(ze)))), c(s(s(s(s(s(ze))))),c(s(s(s(s(s(s(ze)))))), c(s(s(s(s(s(s(s(ze))))))),c(s(s(s(s(s(s(s(s(ze)))))))), null))))))))) -> <empty> ^
-  	safe(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,null))))))))) -> <empty>
+  	perm(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,Nil)))))))), c(s(oo),c(s(s(oo)),c(s(s(s(oo))),c(s(s(s(s(oo)))), c(s(s(s(s(s(oo))))),c(s(s(s(s(s(s(oo)))))), c(s(s(s(s(s(s(s(oo))))))),c(s(s(s(s(s(s(s(s(oo)))))))), Nil))))))))) -> <empty> ^
+  	safe(c(n1,c(n2,c(n3,c(n4,c(n5,c(n6,c(n7,c(n8,Nil))))))))) -> <empty>
   		
-  perm(null,null) -> <empty>
+  perm(Nil,Nil) -> <empty>
   perm(c(head,tail),permList) -> <empty> <=
     del(head,permList) -> <permTail> ^ 
     perm(tail,permTail) -> <empty>
@@ -42,12 +42,12 @@
   del(item,c(first,list)) -> <c(first,list1)> <=
     del(item,list) -> <list1>
  
-  safe(null) -> <empty>
+  safe(Nil) -> <empty>
   safe(c(q,qs)) -> <empty> <=
     safe(qs) -> <empty> ^ 
-    noattack(q,qs,s(ze)) -> <empty>
+    noattack(q,qs,s(oo)) -> <empty>
 	
-  noattack(y,null,x) -> <empty>
+  noattack(y,Nil,x) -> <empty>
   noattack(y,c(y1,ys),xdist) -> <empty> <= 
   	diff(y,y1) -> <ydist>  ^
   	neq(ydist,xdist) -> <empty> ^
@@ -55,20 +55,21 @@
   
   diff(s(x),s(y)) -> <z> <=
     diff(x,y) -> <z>
-  diff(ze,s(y)) -> <s(y)>
-  diff(s(x),ze) -> <s(x)>
+  diff(oo,s(y)) -> <s(y)>
+  diff(s(x),oo) -> <s(x)>
 
   neq(s(x),s(y)) -> <empty> <= neq(x,y) -> <empty>
-  neq(ze,s(y)) -> <empty>
-  neq(s(x),ze) -> <empty>
+  neq(oo,s(y)) -> <empty>
+  neq(s(x),oo) -> <empty>
   
     
 )
 (COMMENT
+    original author; Maja H. Kirkeby
 
-    safe (c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
+    safe (c(s(oo), c(s(s(s(s(s(s(s(oo))))))), c(s(s(s(s(s(oo))))), c(s(s(s(s(s(s(s(s(oo)))))))), c(s(s(oo)), c(s(s(s(s(oo)))), c(s(s(s(s(s(s(oo)))))), c(s(s(s(oo))), Nil)))))))))
 
-    perm (c(s(s(s(s(s(s(s(ze))))))), c(s(ze), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))  (c(s(ze), c(s(s(s(s(s(s(s(ze))))))), c(s(s(s(s(s(ze))))), c(s(s(s(s(s(s(s(s(ze)))))))), c(s(s(ze)), c(s(s(s(s(ze)))), c(s(s(s(s(s(s(ze)))))), c(s(s(s(ze))), null)))))))))
+    perm (c(s(s(s(s(s(s(s(oo))))))), c(s(oo), c(s(s(s(s(s(oo))))), c(s(s(s(s(s(s(s(s(oo)))))))), c(s(s(oo)), c(s(s(s(s(oo)))), c(s(s(s(s(s(s(oo)))))), c(s(s(s(oo))), Nil)))))))))  (c(s(oo), c(s(s(s(s(s(s(s(oo))))))), c(s(s(s(s(s(oo))))), c(s(s(s(s(s(s(s(s(oo)))))))), c(s(s(oo)), c(s(s(s(s(oo)))), c(s(s(s(s(s(s(oo)))))), c(s(s(s(oo))), Nil)))))))))
 
-    eightqueen (s(ze)) (s(s(s(s(s(s(s(ze)))))))) (s(s(s(s(s(ze)))))) (s(s(s(s(s(s(s(s(ze))))))))) (s(s(ze))) (s(s(s(s(ze))))) (s(s(s(s(s(s(ze))))))) (s(s(s(ze))))
+    eightqueen (s(oo)) (s(s(s(s(s(s(s(oo)))))))) (s(s(s(s(s(oo)))))) (s(s(s(s(s(s(s(s(oo))))))))) (s(s(oo))) (s(s(s(s(oo))))) (s(s(s(s(s(s(oo))))))) (s(s(s(oo))))
 )

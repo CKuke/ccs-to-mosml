@@ -1,0 +1,17 @@
+(VAR x y)
+(SIG (f 1 1) (g 1 1) )
+(SORT
+    (c1     -> C)
+    (c2     C -> C)
+    (f      C -> C)
+    (g      C -> C)
+)
+(RULES
+    f(c1) -> <c1>
+    f(c2(x)) -> <y> <= g(x) -> <y>
+    g(c2(x)) -> <y> <= f(x) -> <y>
+)
+(COMMENT
+    Exists to show non exhaustive patterns will still be translated but the
+    MosML REPL will give a warning
+)
